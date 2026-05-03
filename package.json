@@ -1,0 +1,26 @@
+{
+  "name": "artisan-237",
+  "version": "1.0.0",
+  "description": "Parfait — là on est sur un positionnement **très solide : produit data-driven + IA + accessibilité (API gratuites)**. Je te fournis un **document d’envergure professionnel, cohérent techniquement et crédible académiquement**, avec un vrai angle **innovation + architecture + produit**.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/albertboo9/ARTISAN-237.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/albertboo9/ARTISAN-237/issues"
+  },
+  "homepage": "https://github.com/albertboo9/ARTISAN-237#readme",
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  }
+}
