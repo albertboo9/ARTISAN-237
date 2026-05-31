@@ -20,9 +20,13 @@ model User {
   passwordHash String?
   firstName    String
   lastName     String
-  avatarUrl    String?
-  role         Role       @default(CLIENT)
-  status       UserStatus @default(ACTIVE)
+  avatarUrl                 String?
+  role                      Role       @default(CLIENT)
+  status                    UserStatus @default(ACTIVE)
+  emailVerified             Boolean    @default(false)
+  emailVerificationCode     String?
+  passwordResetToken        String?
+  passwordResetExpires      DateTime?
 
   artisanProfile   ArtisanProfile?
   clientJobs       Job[]             @relation("ClientJobs")

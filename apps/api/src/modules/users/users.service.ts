@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { Role, UserStatus } from '@prisma/client';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { Role, UserStatus } from "@prisma/client";
+import { UpdateUserDto } from "./dto/users.dto";
 
 @Injectable()
 export class UsersService {
@@ -30,31 +31,49 @@ export class UsersService {
     return user;
   }
 
-  async update(userId: string, fields?: string) {
+  async update(userId: string, dto: UpdateUserDto) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
     if (!user || user.status === UserStatus.BANNED) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
-    // Allowed fields for self-update
-    const allowedFields = ['firstName', 'lastName', 'phoneNumber', 'avatarUrl'];
+    // Build update payload with only provided fields
     const updateData: Record<string, unknown> = {};
+    if (dto.firstName !== undefined) {
+      updateData.firstName = dto.firstName;
+    }
+    if (dto.lastName !== undefined) {
+      updateData.lastName = dto.lastName;
+    }
+    if (dto.phoneNumber !== undefined) {
+      updateData.phoneNumber = dto.phoneNumber;
+    }
+    if (dto.avatarUrl !== undefined) {
+      updateData.avatarUrl = dto.avatarUrl;
+    }
 
-    if (fields) {
-      const requestedFields = fields.split(',');
-      for (const field of requestedFields) {
-        if (allowedFields.includes(field.trim())) {
-          updateData[field.trim()] = (user as any)[field.trim()];
-        }
-      }
+    if (Object.keys(updateData).length === 0) {
+      return user;
     }
 
     return this.prisma.user.update({
       where: { id: userId },
       data: updateData,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phoneNumber: true,
+        avatarUrl: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
   }
 
@@ -64,7 +83,7 @@ export class UsersService {
     });
 
     if (!user || user.status === UserStatus.BANNED) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     return this.prisma.user.update({
@@ -82,13 +101,17 @@ export class UsersService {
     const { page, pageSize, role, search } = filters;
     const skip = (page - 1) * pageSize;
 
-    const where: Record<string, unknown> = { status: { not: UserStatus.BANNED } };
-    if (role) where.role = role;
+    const where: Record<string, unknown> = {
+      status: { not: UserStatus.BANNED },
+    };
+    if (role) {
+      where.role = role;
+    }
     if (search) {
       where.OR = [
-        { firstName: { contains: search, mode: 'insensitive' as any } },
-        { lastName: { contains: search, mode: 'insensitive' as any } },
-        { email: { contains: search, mode: 'insensitive' as any } },
+        { firstName: { contains: search, mode: "insensitive" as any } },
+        { lastName: { contains: search, mode: "insensitive" as any } },
+        { email: { contains: search, mode: "insensitive" as any } },
       ];
     }
 
@@ -108,7 +131,7 @@ export class UsersService {
         },
         skip,
         take: pageSize,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.user.count({ where }),
     ]);
