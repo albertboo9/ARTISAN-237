@@ -31,9 +31,11 @@
     "pre-commit": "lint-staged"
   },
   "devDependencies": {
-    "turbo": "2.2.3",
+    "eslint": "^8.56.0",
     "husky": "9.1.6",
-    "lint-staged": "15.2.10"
+    "lint-staged": "15.2.10",
+    "prettier": "^3.8.3",
+    "turbo": "2.2.3"
   },
   "engines": {
     "node": ">=20.11.0",

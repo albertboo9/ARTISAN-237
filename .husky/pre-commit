@@ -2,7 +2,5 @@
 # Automatically set up by Husky
 
 # Run lint-staged on pre-commit
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
 
 npx lint-staged
