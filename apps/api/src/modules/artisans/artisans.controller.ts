@@ -1,30 +1,148 @@
-import { Controller, Put, Post, Body, UseGuards, Req } from '@nestjs/common';
-import { ArtisansService } from './artisans.service';
-import { UpdateArtisanProfileDto } from './dto/artisans.dto';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Put,
+  Post,
+  Get,
+  Body,
+  UseGuards,
+  Req,
+  Query,
+  Logger,
+} from "@nestjs/common";
+import { ArtisansService } from "./artisans.service";
+import { UpdateArtisanProfileDto } from "./dto/artisans.dto";
+import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { RolesGuard } from "../../common/guards/roles.guard";
+import { Roles } from "../../common/decorators/roles.decorator";
+import { Role } from "@prisma/client";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiQuery,
+} from "@nestjs/swagger";
 
-@ApiTags('artisans')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('artisans')
+@ApiTags("artisans")
+@Controller("artisans")
 export class ArtisansController {
+  private readonly logger = new Logger(ArtisansController.name);
+
   constructor(private readonly artisansService: ArtisansService) {}
 
-  @ApiOperation({ summary: 'Update Artisan Profile (Bio, Experience, Skills)' })
+  // ──────────────────────────────────────────────────
+  // PUBLIC : Artisans sur la carte (pas besoin d'auth)
+  // ──────────────────────────────────────────────────
+  @ApiOperation({
+    summary: "Get nearby artisans for the map",
+    description:
+      "Returns artisans with their location, availability status, rating, and skills. Optionally filter by radius, service, and availability.",
+  })
+  @ApiQuery({
+    name: "lat",
+    required: false,
+    type: Number,
+    description: "Latitude du centre de recherche",
+  })
+  @ApiQuery({
+    name: "lng",
+    required: false,
+    type: Number,
+    description: "Longitude du centre de recherche",
+  })
+  @ApiQuery({
+    name: "radius",
+    required: false,
+    type: Number,
+    description: "Rayon de recherche en km (défaut: 15)",
+  })
+  @ApiQuery({
+    name: "serviceId",
+    required: false,
+    type: String,
+    description: "Filtrer par service spécifique",
+  })
+  @ApiQuery({
+    name: "available",
+    required: false,
+    type: Boolean,
+    description: "Filtrer uniquement les artisans disponibles",
+  })
+  @Get("map")
+  async getArtisansForMap(
+    @Query("lat") lat?: string,
+    @Query("lng") lng?: string,
+    @Query("radius") radius?: string,
+    @Query("serviceId") serviceId?: string,
+    @Query("available") available?: string,
+  ) {
+    return this.artisansService.getArtisansForMap({
+      lat: lat ? parseFloat(lat) : undefined,
+      lng: lng ? parseFloat(lng) : undefined,
+      radiusKm: radius ? parseFloat(radius) : 15,
+      serviceId,
+      availableOnly: available === "true",
+    });
+  }
+
+  // ──────────────────────────────────────────────────
+  // PROTECTED : Profil artisan
+  // ──────────────────────────────────────────────────
+  @ApiOperation({ summary: "Update Artisan Profile (Bio, Experience, Skills)" })
+  @ApiBearerAuth()
   @Roles(Role.ARTISAN)
-  @Put('profile')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Put("profile")
   async updateProfile(@Req() req: any, @Body() dto: UpdateArtisanProfileDto) {
     return this.artisansService.updateProfile(req.user.sub, dto);
   }
 
-  @ApiOperation({ summary: 'Initiate KYC Verification with Didit' })
+  @ApiOperation({ summary: "Update artisan GPS location" })
+  @ApiBearerAuth()
   @Roles(Role.ARTISAN)
-  @Post('kyc/initiate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Put("location")
+  async updateLocation(
+    @Req() req: any,
+    @Body() body: { lat: number; lng: number },
+  ) {
+    return this.artisansService.updateLocation(
+      req.user.sub,
+      body.lat,
+      body.lng,
+    );
+  }
+
+  @ApiOperation({ summary: "Toggle artisan availability" })
+  @ApiBearerAuth()
+  @Roles(Role.ARTISAN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Put("availability")
+  async toggleAvailability(
+    @Req() req: any,
+    @Body() body: { isAvailable: boolean },
+  ) {
+    return this.artisansService.toggleAvailability(
+      req.user.sub,
+      body.isAvailable,
+    );
+  }
+
+  @ApiOperation({ summary: "Initiate KYC Verification with Didit" })
+  @ApiBearerAuth()
+  @Roles(Role.ARTISAN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Post("kyc/initiate")
   async initiateKyc(@Req() req: any) {
     return this.artisansService.initiateKyc(req.user.sub, req.user.email);
+  }
+
+  // ──────────────────────────────────────────────────
+  // WEBHOOK : Didit KYC Callback (public, validé par session_id)
+  // ──────────────────────────────────────────────────
+  @ApiOperation({ summary: "Didit KYC Webhook — receives verification result" })
+  @Post("webhooks/didit")
+  async handleDiditWebhook(@Body() body: any) {
+    this.logger.log(`Didit Webhook received: ${JSON.stringify(body)}`);
+    return this.artisansService.handleDiditWebhook(body);
   }
 }
