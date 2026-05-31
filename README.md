@@ -1,375 +1,166 @@
-# ARTISAN-237
+# Artisan237
 
-Parfait — là on est sur un positionnement **très solide : produit data-driven + IA + accessibilité (API gratuites)**.
-Je te fournis un **document d’envergure professionnel, cohérent techniquement et crédible académiquement**, avec un vrai angle **innovation + architecture + produit**.
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript)
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js)
+![NestJS](https://img.shields.io/badge/NestJS-E0232E?style=for-the-badge&logo=nestjs)
+![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=for-the-badge&logo=mariadb)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker)
 
----
+Artisan237 is an AI-powered marketplace connecting clients with verified artisans in Douala, Cameroon. The platform features geolocation-based search, a reputation system, XP gamification, and a hybrid ML recommendation engine.
 
-# 📄 DOCUMENT D’ENVERGURE DU PROJET
+## Features
 
-## **Artisan237 — Plateforme intelligente de mise en relation basée sur l’IA et la donnée**
+- 🔐 **Secure Authentication** — JWT with refresh token rotation, RBAC, rate limiting
+- 📍 **Smart Geolocation** — GPS-based artisan discovery with Leaflet maps
+- 🤖 **AI Recommendations** — Hybrid ML engine for personalized artisan matching
+- 🎮 **Gamification** — XP system, badges, levels, and leaderboards
+- ⭐ **Reputation System** — Weighted ratings with anti-fraud measures
+- 📱 **Responsive Design** — Mobile-first with dark/light mode support
+- 🚀 **Production Ready** — Docker, CI/CD, monitoring, and comprehensive testing
 
----
+## Architecture
 
-## 1. Nature et Positionnement du Projet
+```
+apps/
+├── web/              # Next.js 15 frontend
+├── api/              # NestJS backend API
+├── ml-service/       # FastAPI ML recommendation engine
+└── admin/            # Admin dashboard
 
-**Artisan237** est une plateforme numérique innovante visant à transformer l’accès aux services artisanaux au Cameroun grâce à une approche **data-driven** et une **recommandation intelligente**.
-
-Contrairement aux solutions classiques reposant sur des listes statiques, Artisan237 introduit :
-
-* une **prise de décision assistée par la donnée**
-* un **classement dynamique des artisans**
-* un **système évolutif basé sur l’apprentissage**
-
----
-
-### 🧠 Positionnement technique
-
-```text
-Plateforme intelligente orientée données (Data-Driven Marketplace)
-intégrant scoring algorithmique, Machine Learning et gamification.
+packages/
+├── ui/               # Shared shadcn/ui components
+├── types/            # Shared TypeScript types
+├── config/           # Shared configs
+├── shared/           # Shared utilities
+└── eslint-config/    # Shared ESLint config
 ```
 
----
+## Quick Start
 
-## 2. Objectifs Stratégiques
+```bash
+# Clone the repository
+git clone https://github.com/artisan237/artisan237.git
+cd artisan237
 
-### 🎯 Objectif principal
+# Install dependencies
+pnpm install
 
-Optimiser la mise en relation client–artisan en réduisant :
+# Copy environment variables
+cp .env.example .env.local
 
-* le temps de recherche
-* le risque de mauvais choix
-* l’incertitude sur la qualité
+# Start infrastructure (requires Docker)
+pnpm db:start
 
----
+# Run database migrations
+pnpm db:migrate
 
-### 🎯 Objectifs secondaires
+# Seed database with test data
+pnpm db:seed
 
-* Structurer un secteur informel
-* Valoriser les artisans performants
-* Introduire une logique de mérite (classement + XP)
-* Exploiter les données pour améliorer continuellement les recommandations
-
----
-
-## 3. Innovation et Valeur Ajoutée
-
----
-
-### 🧠 3.1 Approche Data-Driven
-
-Le système ne repose pas uniquement sur des profils déclaratifs, mais sur :
-
-* données comportementales (choix clients)
-* performance réelle des artisans
-* historique des interactions
-
-👉 Cela permet une **amélioration continue automatique du système**
-
----
-
-### 🤖 3.2 Recommandation Intelligente
-
-Le cœur du système repose sur un **moteur de recommandation hybride** :
-
-#### 🔹 Phase 1 — Scoring métier
-
-* basé sur règles pondérées (distance, note, disponibilité…)
-
-#### 🔹 Phase 2 — Machine Learning
-
-* modèle prédictif entraîné sur les données
-* capacité à anticiper le choix utilisateur
-
----
-
-### 🎮 3.3 Gamification
-
-* Système d’XP
-* Niveaux artisans
-* Classements dynamiques
-* Récompense des bons comportements
-* Réduction de la fraude
-
----
-
-## 4. Périmètre Fonctionnel
-
----
-
-### 🔷 Modules principaux
-
-* Authentification (Client / Artisan / Admin)
-* Recherche et filtrage d’artisans
-* Recommandation intelligente
-* Système de devis
-* Suivi de chantier (photos + historique)
-* Système d’avis
-* Tableau de bord administrateur
-
----
-
-## 5. Architecture Technique
-
----
-
-### 5.1 Stack Technologique
-
-| Couche           | Technologie             | Rôle                     |
-| ---------------- | ----------------------- | ------------------------ |
-| Frontend         | Next.js (Vercel)        | Interface rapide SSR     |
-| Backend          | Express.js (Render)     | API métier               |
-| Base de données  | Firebase Firestore      | NoSQL temps réel         |
-| IA / ML          | Python (FastAPI)        | Modèle de recommandation |
-| Authentification | Firebase Auth           | Gestion sécurisée        |
-| Cartographie     | OpenStreetMap + Leaflet | Géolocalisation gratuite |
-
----
-
-### 5.2 Choix Cartographique (Optimisation coût)
-
-Le projet privilégie des solutions open-source :
-
-* OpenStreetMap (données géographiques)
-* Leaflet.js (affichage cartographique)
-
-👉 Avantages :
-
-* gratuit
-* personnalisable
-* sans dépendance forte à un fournisseur payant
-
----
-
-### 5.3 Architecture Globale
-
-```text
-Frontend (Next.js - Vercel)
-        ↓
-API REST (Express.js - Render)
-        ↓
-Firebase Firestore
-        ↓
-Service IA (Python - Render)
+# Start all applications in development
+pnpm dev
 ```
 
----
+## Environment Variables
 
-## 6. Complexité du Projet
+See `.env.example` for all required environment variables.
 
----
+## API Documentation
 
-### 🔷 Complexité Fonctionnelle
+Once the API is running, access Swagger documentation at:
 
-* multi-acteurs
-* workflows complets (devis → chantier → avis)
-* interactions dynamiques
-
----
-
-### 🔷 Complexité Technique
-
-* architecture distribuée
-* communication inter-services (Node ↔ IA)
-* gestion temps réel
-* géolocalisation
-
----
-
-### 🔷 Complexité Data
-
-* stockage de données comportementales
-* pipeline d’apprentissage
-* scoring dynamique
-
----
-
-## 7. Système de Recommandation
-
----
-
-### 7.1 Scoring initial
-
-```text
-Score =
-(Spécialité × 0.30)
-+ (Proximité × 0.25)
-+ (Réputation × 0.20)
-+ (Disponibilité × 0.15)
-+ (Historique × 0.10)
+```
+http://localhost:3001/api/docs
 ```
 
----
+## Development
 
-### 7.2 Évolution IA
+```bash
+# Run web app only
+pnpm dev:web
 
-Le système évolue vers un modèle capable de :
+# Run API only
+pnpm dev:api
 
-* prédire le choix utilisateur
-* adapter les recommandations en temps réel
+# Run ML service only
+pnpm dev:ml
 
----
+# Run tests
+pnpm test
 
-### 7.3 Objectifs
-
-* maximiser satisfaction client
-* améliorer conversion devis → chantier
-* réduire les mauvais choix
-
----
-
-## 8. Système de Gamification
-
----
-
-### 8.1 XP et progression
-
-| Action           | XP  |
-| ---------------- | --- |
-| Réponse rapide   | +5  |
-| Devis accepté    | +20 |
-| Chantier terminé | +50 |
-| Avis positif     | +30 |
-
----
-
-### 8.2 Niveaux
-
-```text
-Beginner → Intermediate → Professional → Elite
+# Lint and format
+pnpm lint
+pnpm format
 ```
 
----
+## Testing Strategy
 
-### 8.3 Classements
+| Layer       | Tool          | Coverage |
+|-------------|---------------|----------|
+| Unit        | Jest / Vitest | 80%      |
+| Integration | Supertest     | Critical paths |
+| E2E         | Playwright    | Core flows |
+| API Contract| Postman       | Full API surface |
 
-* global
-* par métier
-* par zone géographique
+## Docker Deployment
 
----
+```bash
+# Production
+docker compose up -d --build
 
-## 9. Données et Machine Learning
-
----
-
-### 9.1 Stratégie
-
-Le projet adopte une approche réaliste :
-
-#### 🔹 Phase 1
-
-* génération de données simulées
-
-#### 🔹 Phase 2
-
-* collecte des interactions réelles
-
-#### 🔹 Phase 3
-
-* entraînement du modèle
-
----
-
-### 9.2 Variables utilisées
-
-* distance
-* note artisan
-* prix
-* temps de réponse
-* taux de succès
-
----
-
-### 9.3 Objectif du modèle
-
-```text
-Prédire la probabilité de sélection d’un artisan
+# Development with hot reload
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 ```
 
----
+## Tech Stack
 
-## 10. Volumétrie
+| Layer        | Technology                      |
+|-------------|--------------------------------|
+| Frontend    | Next.js 15, React 19, TypeScript |
+| UI          | shadcn/ui, TailwindCSS         |
+| State       | Zustand, TanStack Query        |
+| Backend     | NestJS 10, Prisma ORM          |
+| Database    | MariaDB 11                     |
+| ML Service  | FastAPI, Scikit-learn          |
+| Auth        | JWT, bcrypt, Refresh Tokens    |
+| Infrastructure | Docker, GitHub Actions      |
+| Testing     | Jest, Supertest, Playwright    |
 
-| Élément           | Estimation          |
-| ----------------- | ------------------- |
-| Utilisateurs      | 1 000 – 10 000      |
-| Artisans          | 200 – 1 000         |
-| Interactions/jour | 500+                |
-| Données ML        | croissance continue |
+## Project Structure - Frontend
 
----
-
-## 11. Contraintes Techniques
-
-* temps réponse API < 500 ms
-* calcul recommandation < 300 ms
-* sécurité (authentification + validation)
-* optimisation Firestore (coût & performance)
-
----
-
-## 12. Risques
-
----
-
-### 🔴 Techniques
-
-* architecture distribuée
-* intégration IA
-
----
-
-### 🔴 Data
-
-* biais dataset initial
-* manque de données réelles
-
----
-
-### 🔴 Produit
-
-* adoption utilisateurs
-* qualité artisans
-
----
-
-## 13. Stratégie de Mitigation
-
-* approche progressive (scoring → ML)
-* architecture modulaire
-* collecte continue des données
-* tests itératifs
-
----
-
-## 14. Envergure du Projet
-
-| Critère       | Niveau             |
-| ------------- | ------------------ |
-| Complexité    | Élevée             |
-| Innovation    | Très élevée        |
-| Dimension IA  | Centrale           |
-| Architecture  | Moderne distribuée |
-| Impact métier | Fort               |
-
----
-
-## 15. Conclusion
-
-Artisan237 s’inscrit comme une solution innovante combinant :
-
-* **ingénierie logicielle moderne**
-* **exploitation avancée de la donnée**
-* **intelligence artificielle**
-* **expérience utilisateur gamifiée**
-
-Le projet dépasse largement un développement classique pour devenir :
-
-```text
-Un système intelligent évolutif orienté décision,
-capable d’apprendre et d’optimiser ses recommandations en continu.
+```
+app/
+├── (auth)/           # Authentication pages
+├── (dashboard)/      # User dashboard
+├── (marketplace)/    # Artisan discovery
+├── (admin)/          # Admin panel
+├── providers.tsx     # App providers
+└── layout.tsx        # Root layout
 ```
 
----
+## Project Structure - Backend
+
+```
+src/modules/
+├── auth/             # Authentication module
+├── artisans/         # Artisan profile management
+├── marketplace/      # Search and discovery
+├── missions/         # Job lifecycle management
+├── reviews/          # Rating and reviews
+├── gamification/     # XP, badges, levels
+├── notifications/    # Notification system
+└── search/           # ML-powered search
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feat/amazing-feature`)
+3. Ensure tests pass and linting is clean
+4. Commit with conventional commits (`feat(scope): description`)
+5. Open a Pull Request
+
+## License
+
+MIT License - see LICENSE file for details.

@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@artisan237/ui": ["./packages/ui/src"],
+      "@artisan237/types": ["./packages/types/src"],
+      "@artisan237/config": ["./packages/config/src"],
+      "@artisan237/shared": ["./packages/shared/src"]
+    }
+  },
+  "include": ["src/**/*", "app/**/*", "components/**/*", "lib/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

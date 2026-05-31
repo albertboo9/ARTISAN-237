@@ -1,0 +1,21 @@
+{
+  "name": "create-artisan237-app",
+  "version": "1.0.0",
+  "description": "Create Artisan237 App - Project scaffolding tool",
+  "main": "dist/index.js",
+  "bin": {
+    "create-artisan237": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "execa": "^9.0.0",
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "tsup": "8.3.0",
+    "typescript": "5.6.2"
+  }
+}

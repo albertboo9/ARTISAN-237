@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # Override for development with hot-reload
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api-rebuild-deps
+    command: pnpm run start:dev
+    volumes:
+      - ./apps/api/src:/app/apps/api/src
+      - ./apps/api/prisma:/app/apps/api/prisma
+    ports:
+      - "3001:3001"
+      - "9229:9229"  # Node inspector
+    environment:
+      NODE_ENV: development
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: rebuild-deps
+    command: pnpm -F @artisan237/web dev
+    volumes:
+      - ./apps/web:/app/apps/web
+      - ./packages:/app/packages
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+
+  ml-service:
+    build:
+      context: ./apps/ml-service
+      dockerfile: Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./apps/ml-service:/app
+    ports:
+      - "8000:8000"

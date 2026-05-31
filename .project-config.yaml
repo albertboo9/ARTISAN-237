@@ -1,0 +1,55 @@
+name: "Artisan237"
+description: "AI-powered marketplace for artisans in Douala, Cameroon"
+version: "1.0.0"
+
+env:
+  NODE_ENV: development
+  PORT: 3001
+
+dependencies:
+  class-validator: ^0.14
+  zod: ^3.23
+  helmet: ^7.1
+  bcrypt: ^5.1
+  @nestjs/jwt: ^10.2
+  @nestjs/passport: ^10.0
+  passport-jwt: ^4.0
+  @prisma/client: ^5.18
+
+database:
+  provider: mysql
+  url: ${DATABASE_URL}
+  migrations: prisma/migrations
+
+auth:
+  accessTokenExpiry: 15m
+  refreshTokenExpiry: 7d
+  jwtSecret: ${JWT_SECRET}
+
+security:
+  cors: ${CORS_ORIGIN}
+  rateLimit:
+    window: 900000
+    max: 100
+  csrf: true
+
+logging:
+  level: info
+  format: json
+  transports:
+    - console
+    - file: artisan237.log
+
+ml:
+  serviceUrl: ${ML_SERVICE_URL}
+  modelPath: /app/ml/model.joblib
+
+storage:
+  provider: minio
+  endpoint: ${S3_ENDPOINT}
+  bucket: artisan237-assets
+
+monitoring:
+  enabled: true
+  port: 9090
+  path: /metrics

@@ -1,0 +1,557 @@
+
+
+> @artisan237/api@1.0.0 build /home/albert/ARTISAN-237/apps/api
+> nest build
+
+[96msrc/app.module.exports.ts[0m:[93m7[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module './modules/auth/guards/jwt-auth.guard' or its corresponding type declarations.
+
+[7m7[0m export { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/app.module.exports.ts[0m:[93m8[0m:[93m28[0m - [91merror[0m[90m TS2307: [0mCannot find module './modules/auth/guards/roles.guard' or its corresponding type declarations.
+
+[7m8[0m export { RolesGuard } from './modules/auth/guards/roles.guard';
+[7m [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/common/interceptors/timeout.interceptor.ts[0m:[93m7[0m:[93m37[0m - [91merror[0m[90m TS2307: [0mCannot find module 'rxjs' or its corresponding type declarations.
+
+[7m7[0m import { Observable, timeout } from 'rxjs';
+[7m [0m [91m                                    ~~~~~~[0m
+[96msrc/common/interceptors/transform.interceptor.ts[0m:[93m7[0m:[93m33[0m - [91merror[0m[90m TS2307: [0mCannot find module 'rxjs' or its corresponding type declarations.
+
+[7m7[0m import { map, Observable } from 'rxjs';
+[7m [0m [91m                                ~~~~~~[0m
+[96msrc/common/interceptors/transform.interceptor.ts[0m:[93m22[0m:[93m12[0m - [91merror[0m[90m TS7006: [0mParameter 'data' implicitly has an 'any' type.
+
+[7m22[0m       map((data) => ({
+[7m  [0m [91m           ~~~~[0m
+[96msrc/main.ts[0m:[93m6[0m:[93m34[0m - [91merror[0m[90m TS2307: [0mCannot find module './common/middleware/helmet.middleware' or its corresponding type declarations.
+
+[7m6[0m import { helmetMiddleware } from './common/middleware/helmet.middleware';
+[7m [0m [91m                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/main.ts[0m:[93m43[0m:[93m24[0m - [91merror[0m[90m TS2554: [0mExpected 1 arguments, but got 0.
+
+[7m43[0m   app.useGlobalFilters(new AllExceptionsFilter());
+[7m  [0m [91m                       ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  [96msrc/common/filters/all-exceptions.filter.ts[0m:[93m22[0m:[93m15[0m
+    [7m22[0m   constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
+    [7m  [0m [96m              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+    An argument for 'httpAdapterHost' was not provided.
+[96msrc/modules/admin/admin.controller.ts[0m:[93m15[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../common/guards/jwt-auth.guard' or its corresponding type declarations.
+
+[7m15[0m import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+[7m  [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/admin/admin.controller.ts[0m:[93m16[0m:[93m28[0m - [91merror[0m[90m TS2307: [0mCannot find module '../common/guards/roles.guard' or its corresponding type declarations.
+
+[7m16[0m import { RolesGuard } from '../common/guards/roles.guard';
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/admin/admin.module.ts[0m:[93m3[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.module' or its corresponding type declarations.
+
+[7m3[0m import { PrismaModule } from '../prisma/prisma.module';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/admin/admin.module.ts[0m:[93m4[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../shared/shared.module' or its corresponding type declarations.
+
+[7m4[0m import { SharedModule } from '../shared/shared.module';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/admin/admin.service.ts[0m:[93m2[0m:[93m31[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.service' or its corresponding type declarations.
+
+[7m2[0m import { PrismaService } from '../prisma/prisma.service';
+[7m [0m [91m                              ~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/artisans/artisans.controller.ts[0m:[93m18[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../common/guards/jwt-auth.guard' or its corresponding type declarations.
+
+[7m18[0m import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+[7m  [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/artisans/artisans.controller.ts[0m:[93m19[0m:[93m28[0m - [91merror[0m[90m TS2307: [0mCannot find module '../common/guards/roles.guard' or its corresponding type declarations.
+
+[7m19[0m import { RolesGuard } from '../common/guards/roles.guard';
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/artisans/artisans.controller.ts[0m:[93m56[0m:[93m33[0m - [91merror[0m[90m TS2554: [0mExpected 3 arguments, but got 2.
+
+[7m56[0m     return this.artisansService.update(req.user.sub, id);
+[7m  [0m [91m                                ~~~~~~[0m
+
+  [96msrc/modules/artisans/artisans.service.ts[0m:[93m118[0m:[93m51[0m
+    [7m118[0m   async update(userId: string, profileId: string, data: any) {
+    [7m   [0m [96m                                                  ~~~~~~~~~[0m
+    An argument for 'data' was not provided.
+[96msrc/modules/artisans/artisans.controller.ts[0m:[93m66[0m:[93m37[0m - [91merror[0m[90m TS2694: [0mNamespace 'global.Express' has no exported member 'Multer'.
+
+[7m66[0m     @UploadedFiles() files: Express.Multer.File[],
+[7m  [0m [91m                                    ~~~~~~[0m
+[96msrc/modules/artisans/artisans.controller.ts[0m:[93m93[0m:[93m7[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'lat' does not exist in type 'SearchParams'.
+
+[7m93[0m       lat,
+[7m  [0m [91m      ~~~[0m
+[96msrc/modules/artisans/artisans.module.ts[0m:[93m2[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.module' or its corresponding type declarations.
+
+[7m2[0m import { PrismaModule } from '../prisma/prisma.module';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/artisans/artisans.module.ts[0m:[93m6[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../shared/shared.module' or its corresponding type declarations.
+
+[7m6[0m import { SharedModule } from '../shared/shared.module';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/artisans/artisans.service.spec.ts[0m:[93m2[0m:[93m33[0m - [91merror[0m[90m TS2307: [0mCannot find module '../src/modules/artisans/artisans.service' or its corresponding type declarations.
+
+[7m2[0m import { ArtisansService } from '../src/modules/artisans/artisans.service';
+[7m [0m [91m                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/artisans/artisans.service.spec.ts[0m:[93m3[0m:[93m31[0m - [91merror[0m[90m TS2307: [0mCannot find module '../src/prisma/prisma.service' or its corresponding type declarations.
+
+[7m3[0m import { PrismaService } from '../src/prisma/prisma.service';
+[7m [0m [91m                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/artisans/artisans.service.ts[0m:[93m2[0m:[93m31[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.service' or its corresponding type declarations.
+
+[7m2[0m import { PrismaService } from '../prisma/prisma.service';
+[7m [0m [91m                              ~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/artisans/artisans.service.ts[0m:[93m4[0m:[93m62[0m - [91merror[0m[90m TS6059: [0mFile '/home/albert/ARTISAN-237/packages/shared/src/index.ts' is not under 'rootDir' '/home/albert/ARTISAN-237/apps/api'. 'rootDir' is expected to contain all source files.
+  The file is in the program because:
+    Imported via '@artisan237/shared' from file '/home/albert/ARTISAN-237/apps/api/src/modules/artisans/artisans.service.ts'
+    Imported via '@artisan237/shared' from file '/home/albert/ARTISAN-237/apps/api/src/modules/marketplace/marketplace.service.ts'
+    Imported via '@artisan237/shared' from file '/home/albert/ARTISAN-237/apps/api/src/modules/search/search.service.ts'
+
+[7m4[0m import { calculateDistance, toGeoHash, formatCurrency } from '@artisan237/shared';
+[7m [0m [91m                                                             ~~~~~~~~~~~~~~~~~~~~[0m
+
+  [96msrc/modules/marketplace/marketplace.service.ts[0m:[93m4[0m:[93m35[0m
+    [7m4[0m import { calculateDistance } from '@artisan237/shared';
+    [7m [0m [96m                                  ~~~~~~~~~~~~~~~~~~~~[0m
+    File is included via import here.
+  [96msrc/modules/search/search.service.ts[0m:[93m4[0m:[93m35[0m
+    [7m4[0m import { calculateDistance } from '@artisan237/shared';
+    [7m [0m [96m                                  ~~~~~~~~~~~~~~~~~~~~[0m
+    File is included via import here.
+[96msrc/modules/artisans/artisans.service.ts[0m:[93m137[0m:[93m59[0m - [91merror[0m[90m TS2694: [0mNamespace 'global.Express' has no exported member 'Multer'.
+
+[7m137[0m   async uploadPortfolio(profileId: string, files: Express.Multer.File[]) {
+[7m   [0m [91m                                                          ~~~~~~[0m
+[96msrc/modules/auth/auth-module.reexport.ts[0m:[93m7[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module './guards/jwt-auth.guard' or its corresponding type declarations.
+
+[7m7[0m import { JwtAuthGuard } from './guards/jwt-auth.guard';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth-module.reexport.ts[0m:[93m8[0m:[93m28[0m - [91merror[0m[90m TS2307: [0mCannot find module './guards/roles.guard' or its corresponding type declarations.
+
+[7m8[0m import { RolesGuard } from './guards/roles.guard';
+[7m [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth-module.reexport.ts[0m:[93m26[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module './guards/jwt-auth.guard' or its corresponding type declarations.
+
+[7m26[0m export { JwtAuthGuard } from './guards/jwt-auth.guard';
+[7m  [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth-module.reexport.ts[0m:[93m27[0m:[93m28[0m - [91merror[0m[90m TS2307: [0mCannot find module './guards/roles.guard' or its corresponding type declarations.
+
+[7m27[0m export { RolesGuard } from './guards/roles.guard';
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.controller.ts[0m:[93m25[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../common/guards/jwt-auth.guard' or its corresponding type declarations.
+
+[7m25[0m import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+[7m  [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.controller.ts[0m:[93m26[0m:[93m28[0m - [91merror[0m[90m TS2307: [0mCannot find module '../common/guards/roles.guard' or its corresponding type declarations.
+
+[7m26[0m import { RolesGuard } from '../common/guards/roles.guard';
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.controller.ts[0m:[93m47[0m:[93m43[0m - [91merror[0m[90m TS2554: [0mExpected 2 arguments, but got 1.
+
+[7m47[0m     const tokens = await this.authService.login(dto);
+[7m  [0m [91m                                          ~~~~~[0m
+
+  [96msrc/modules/auth/auth.service.ts[0m:[93m102[0m:[93m30[0m
+    [7m102[0m   async login(email: string, password: string): Promise<{
+    [7m   [0m [96m                             ~~~~~~~~~~~~~~~~[0m
+    An argument for 'password' was not provided.
+[96msrc/modules/auth/auth.module.ts[0m:[93m8[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module './guards/jwt-auth.guard' or its corresponding type declarations.
+
+[7m8[0m import { JwtAuthGuard } from './guards/jwt-auth.guard';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.module.ts[0m:[93m9[0m:[93m28[0m - [91merror[0m[90m TS2307: [0mCannot find module './guards/roles.guard' or its corresponding type declarations.
+
+[7m9[0m import { RolesGuard } from './guards/roles.guard';
+[7m [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.module.ts[0m:[93m10[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.module' or its corresponding type declarations.
+
+[7m10[0m import { PrismaModule } from '../prisma/prisma.module';
+[7m  [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.spec.ts[0m:[93m3[0m:[93m29[0m - [91merror[0m[90m TS2307: [0mCannot find module '../src/modules/auth/auth.service' or its corresponding type declarations.
+
+[7m3[0m import { AuthService } from '../src/modules/auth/auth.service';
+[7m [0m [91m                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.spec.ts[0m:[93m4[0m:[93m31[0m - [91merror[0m[90m TS2307: [0mCannot find module '../src/prisma/prisma.service' or its corresponding type declarations.
+
+[7m4[0m import { PrismaService } from '../src/prisma/prisma.service';
+[7m [0m [91m                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.spec.ts[0m:[93m7[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../src/modules/users/users.service' or its corresponding type declarations.
+
+[7m7[0m import { UsersService } from '../src/modules/users/users.service';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m58[0m:[93m38[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'phone' does not exist in type 'UserWhereInput'.
+
+[7m58[0m         OR: [{ email: dto.email }, { phone: dto.phone }],
+[7m  [0m [91m                                     ~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m67[0m:[93m24[0m - [91merror[0m[90m TS2339: [0mProperty 'phone' does not exist on type '{ firstName: string; lastName: string; avatarUrl: string | null; role: Role; email: string | null; id: string; phoneNumber: string; passwordHash: string | null; status: UserStatus; createdAt: Date; updatedAt: Date; }'.
+
+[7m67[0m       if (existingUser.phone === dto.phone) {
+[7m  [0m [91m                       ~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m83[0m:[93m9[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'phone' does not exist in type '(Without<UserCreateInput, UserUncheckedCreateInput> & UserUncheckedCreateInput) | (Without<...> & UserCreateInput)'.
+
+[7m83[0m         phone: dto.phone,
+[7m  [0m [91m        ~~~~~[0m
+
+  [96m../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client/index.d.ts[0m:[93m3676[0m:[93m5[0m
+    [7m3676[0m     data: XOR<UserCreateInput, UserUncheckedCreateInput>
+    [7m    [0m [96m    ~~~~[0m
+    The expected type comes from property 'data' which is declared here on type '{ select?: UserSelect<DefaultArgs> | null | undefined; include?: UserInclude<DefaultArgs> | null | undefined; data: (Without<UserCreateInput, UserUncheckedCreateInput> & UserUncheckedCreateInput) | (Without<...> & UserCreateInput); }'
+[96msrc/modules/auth/auth.service.ts[0m:[93m94[0m:[93m38[0m - [91merror[0m[90m TS2345: [0mArgument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+
+[7m94[0m     await this.sendVerificationEmail(user.email, verificationCode);
+[7m  [0m [91m                                     ~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m111[0m:[93m54[0m - [91merror[0m[90m TS18048: [0m'rateLimit.resetTime' is possibly 'undefined'.
+
+[7m111[0m         `Too many attempts. Try again in ${Math.ceil(rateLimit.resetTime / 1000)} seconds.`,
+[7m   [0m [91m                                                     ~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m116[0m:[93m23[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'deletedAt' does not exist in type 'UserWhereInput'.
+
+[7m116[0m       where: { email, deletedAt: null },
+[7m   [0m [91m                      ~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m124[0m:[93m15[0m - [91merror[0m[90m TS2339: [0mProperty 'emailVerified' does not exist on type '{ firstName: string; lastName: string; avatarUrl: string | null; role: Role; email: string | null; id: string; phoneNumber: string; passwordHash: string | null; status: UserStatus; createdAt: Date; updatedAt: Date; }'.
+
+[7m124[0m     if (!user.emailVerified) {
+[7m   [0m [91m              ~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m128[0m:[93m15[0m - [91merror[0m[90m TS2339: [0mProperty 'isActive' does not exist on type '{ firstName: string; lastName: string; avatarUrl: string | null; role: Role; email: string | null; id: string; phoneNumber: string; passwordHash: string | null; status: UserStatus; createdAt: Date; updatedAt: Date; }'.
+
+[7m128[0m     if (!user.isActive) {
+[7m   [0m [91m              ~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m132[0m:[93m52[0m - [91merror[0m[90m TS2345: [0mArgument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+
+[7m132[0m     const isValid = await bcrypt.compare(password, user.passwordHash);
+[7m   [0m [91m                                                   ~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m147[0m:[93m15[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'lastLoginAt' does not exist in type '(Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput)'.
+
+[7m147[0m       data: { lastLoginAt: new Date() },
+[7m   [0m [91m              ~~~~~~~~~~~[0m
+
+  [96m../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client/index.d.ts[0m:[93m3720[0m:[93m5[0m
+    [7m3720[0m     data: XOR<UserUpdateInput, UserUncheckedUpdateInput>
+    [7m    [0m [96m    ~~~~[0m
+    The expected type comes from property 'data' which is declared here on type '{ select?: UserSelect<DefaultArgs> | null | undefined; include?: UserInclude<DefaultArgs> | null | undefined; data: (Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput); where: UserWhereUniqueInput; }'
+[96msrc/modules/auth/auth.service.ts[0m:[93m161[0m:[93m43[0m - [91merror[0m[90m TS2339: [0mProperty 'refreshToken' does not exist on type 'PrismaService'.
+
+[7m161[0m     const storedToken = await this.prisma.refreshToken.findUnique({
+[7m   [0m [91m                                          ~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m171[0m:[93m23[0m - [91merror[0m[90m TS2339: [0mProperty 'refreshToken' does not exist on type 'PrismaService'.
+
+[7m171[0m     await this.prisma.refreshToken.delete({
+[7m   [0m [91m                      ~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m181[0m:[93m23[0m - [91merror[0m[90m TS2339: [0mProperty 'refreshToken' does not exist on type 'PrismaService'.
+
+[7m181[0m     await this.prisma.refreshToken.deleteMany({
+[7m   [0m [91m                      ~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m188[0m:[93m23[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'deletedAt' does not exist in type 'UserWhereInput'.
+
+[7m188[0m       where: { email, deletedAt: null },
+[7m   [0m [91m                      ~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m205[0m:[93m41[0m - [91merror[0m[90m TS2345: [0mArgument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+
+[7m205[0m       await this.sendPasswordResetEmail(user.email, token);
+[7m   [0m [91m                                        ~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m213[0m:[93m9[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'passwordResetToken' does not exist in type 'UserWhereInput'.
+
+[7m213[0m         passwordResetToken: token,
+[7m   [0m [91m        ~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m229[0m:[93m9[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'passwordResetToken' does not exist in type '(Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput)'.
+
+[7m229[0m         passwordResetToken: null,
+[7m   [0m [91m        ~~~~~~~~~~~~~~~~~~[0m
+
+  [96m../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client/index.d.ts[0m:[93m3720[0m:[93m5[0m
+    [7m3720[0m     data: XOR<UserUpdateInput, UserUncheckedUpdateInput>
+    [7m    [0m [96m    ~~~~[0m
+    The expected type comes from property 'data' which is declared here on type '{ select?: UserSelect<DefaultArgs> | null | undefined; include?: UserInclude<DefaultArgs> | null | undefined; data: (Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput); where: UserWhereUniqueInput; }'
+[96msrc/modules/auth/auth.service.ts[0m:[93m238[0m:[93m9[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'emailVerificationCode' does not exist in type 'UserWhereInput'.
+
+[7m238[0m         emailVerificationCode: code,
+[7m   [0m [91m        ~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m251[0m:[93m9[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'emailVerified' does not exist in type '(Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput)'.
+
+[7m251[0m         emailVerified: true,
+[7m   [0m [91m        ~~~~~~~~~~~~~[0m
+
+  [96m../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client/index.d.ts[0m:[93m3720[0m:[93m5[0m
+    [7m3720[0m     data: XOR<UserUpdateInput, UserUncheckedUpdateInput>
+    [7m    [0m [96m    ~~~~[0m
+    The expected type comes from property 'data' which is declared here on type '{ select?: UserSelect<DefaultArgs> | null | undefined; include?: UserInclude<DefaultArgs> | null | undefined; data: (Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput); where: UserWhereUniqueInput; }'
+[96msrc/modules/auth/auth.service.ts[0m:[93m267[0m:[93m14[0m - [91merror[0m[90m TS2339: [0mProperty 'emailVerified' does not exist on type '{ firstName: string; lastName: string; avatarUrl: string | null; role: Role; email: string | null; id: string; phoneNumber: string; passwordHash: string | null; status: UserStatus; createdAt: Date; updatedAt: Date; }'.
+
+[7m267[0m     if (user.emailVerified) {
+[7m   [0m [91m             ~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m275[0m:[93m15[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'emailVerificationCode' does not exist in type '(Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput)'.
+
+[7m275[0m       data: { emailVerificationCode: verificationCode },
+[7m   [0m [91m              ~~~~~~~~~~~~~~~~~~~~~[0m
+
+  [96m../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/.prisma/client/index.d.ts[0m:[93m3720[0m:[93m5[0m
+    [7m3720[0m     data: XOR<UserUpdateInput, UserUncheckedUpdateInput>
+    [7m    [0m [96m    ~~~~[0m
+    The expected type comes from property 'data' which is declared here on type '{ select?: UserSelect<DefaultArgs> | null | undefined; include?: UserInclude<DefaultArgs> | null | undefined; data: (Without<UserUpdateInput, UserUncheckedUpdateInput> & UserUncheckedUpdateInput) | (Without<...> & UserUpdateInput); where: UserWhereUniqueInput; }'
+[96msrc/modules/auth/auth.service.ts[0m:[93m278[0m:[93m38[0m - [91merror[0m[90m TS2345: [0mArgument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+
+[7m278[0m     await this.sendVerificationEmail(user.email, verificationCode);
+[7m   [0m [91m                                     ~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m309[0m:[93m23[0m - [91merror[0m[90m TS2339: [0mProperty 'refreshToken' does not exist on type 'PrismaService'.
+
+[7m309[0m     await this.prisma.refreshToken.create({
+[7m   [0m [91m                      ~~~~~~~~~~~~[0m
+[96msrc/modules/auth/auth.service.ts[0m:[93m368[0m:[93m23[0m - [91merror[0m[90m TS2339: [0mProperty 'xPLog' does not exist on type 'PrismaService'.
+
+[7m368[0m     await this.prisma.xPLog.create({
+[7m   [0m [91m                      ~~~~~[0m
+[96msrc/modules/auth/dto/auth.dto.ts[0m:[93m6[0m:[93m3[0m - [91merror[0m[90m TS2564: [0mProperty 'email' has no initializer and is not definitely assigned in the constructor.
+
+[7m6[0m   email: string;
+[7m [0m [91m  ~~~~~[0m
+[96msrc/modules/auth/dto/auth.dto.ts[0m:[93m9[0m:[93m3[0m - [91merror[0m[90m TS2564: [0mProperty 'firstName' has no initializer and is not definitely assigned in the constructor.
+
+[7m9[0m   firstName: string;
+[7m [0m [91m  ~~~~~~~~~[0m
+[96msrc/modules/auth/dto/auth.dto.ts[0m:[93m12[0m:[93m3[0m - [91merror[0m[90m TS2564: [0mProperty 'lastName' has no initializer and is not definitely assigned in the constructor.
+
+[7m12[0m   lastName: string;
+[7m  [0m [91m  ~~~~~~~~[0m
+[96msrc/modules/auth/dto/auth.dto.ts[0m:[93m16[0m:[93m3[0m - [91merror[0m[90m TS2564: [0mProperty 'password' has no initializer and is not definitely assigned in the constructor.
+
+[7m16[0m   password: string;
+[7m  [0m [91m  ~~~~~~~~[0m
+[96msrc/modules/auth/dto/auth.dto.ts[0m:[93m22[0m:[93m3[0m - [91merror[0m[90m TS2564: [0mProperty 'role' has no initializer and is not definitely assigned in the constructor.
+
+[7m22[0m   role: Role;
+[7m  [0m [91m  ~~~~[0m
+[96msrc/modules/auth/dto/auth.dto.ts[0m:[93m27[0m:[93m3[0m - [91merror[0m[90m TS2564: [0mProperty 'email' has no initializer and is not definitely assigned in the constructor.
+
+[7m27[0m   email: string;
+[7m  [0m [91m  ~~~~~[0m
+[96msrc/modules/auth/dto/auth.dto.ts[0m:[93m31[0m:[93m3[0m - [91merror[0m[90m TS2564: [0mProperty 'password' has no initializer and is not definitely assigned in the constructor.
+
+[7m31[0m   password: string;
+[7m  [0m [91m  ~~~~~~~~[0m
+[96msrc/modules/auth/dto/auth.dto.ts[0m:[93m37[0m:[93m3[0m - [91merror[0m[90m TS2564: [0mProperty 'refreshToken' has no initializer and is not definitely assigned in the constructor.
+
+[7m37[0m   refreshToken: string;
+[7m  [0m [91m  ~~~~~~~~~~~~[0m
+[96msrc/modules/auth/dto/auth.dto.ts[0m:[93m42[0m:[93m3[0m - [91merror[0m[90m TS2564: [0mProperty 'email' has no initializer and is not definitely assigned in the constructor.
+
+[7m42[0m   email: string;
+[7m  [0m [91m  ~~~~~[0m
+[96msrc/modules/auth/dto/auth.dto.ts[0m:[93m49[0m:[93m3[0m - [91merror[0m[90m TS2564: [0mProperty 'password' has no initializer and is not definitely assigned in the constructor.
+
+[7m49[0m   password: string;
+[7m  [0m [91m  ~~~~~~~~[0m
+[96msrc/modules/auth/dto/auth.dto.ts[0m:[93m55[0m:[93m3[0m - [91merror[0m[90m TS2564: [0mProperty 'code' has no initializer and is not definitely assigned in the constructor.
+
+[7m55[0m   code: string;
+[7m  [0m [91m  ~~~~[0m
+[96msrc/modules/auth/guards/local-auth.guard.ts[0m:[93m3[0m:[93m26[0m - [91merror[0m[90m TS2307: [0mCannot find module 'passport-local' or its corresponding type declarations.
+
+[7m3[0m import { Strategy } from 'passport-local';
+[7m [0m [91m                         ~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/auth/guards/local-auth.guard.ts[0m:[93m4[0m:[93m29[0m - [91merror[0m[90m TS2307: [0mCannot find module './auth.service' or its corresponding type declarations.
+
+[7m4[0m import { AuthService } from './auth.service';
+[7m [0m [91m                            ~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/gamification/gamification.controller.ts[0m:[93m9[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../common/guards/jwt-auth.guard' or its corresponding type declarations.
+
+[7m9[0m import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/gamification/gamification.controller.ts[0m:[93m36[0m:[93m42[0m - [91merror[0m[90m TS2304: [0mCannot find name 'Query'.
+
+[7m36[0m   async getLeaderboard(@Req() req: any, @Query('category') category: string) {
+[7m  [0m [91m                                         ~~~~~[0m
+[96msrc/modules/gamification/gamification.module.ts[0m:[93m2[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.module' or its corresponding type declarations.
+
+[7m2[0m import { PrismaModule } from '../prisma/prisma.module';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/gamification/gamification.service.ts[0m:[93m2[0m:[93m31[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.service' or its corresponding type declarations.
+
+[7m2[0m import { PrismaService } from '../prisma/prisma.service';
+[7m [0m [91m                              ~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/gamification/gamification.service.ts[0m:[93m3[0m:[93m10[0m - [91merror[0m[90m TS2305: [0mModule '"@prisma/client"' has no exported member 'XPLog'.
+
+[7m3[0m import { XPLog, Prisma } from '@prisma/client';
+[7m [0m [91m         ~~~~~[0m
+[96msrc/modules/marketplace/marketplace.controller.ts[0m:[93m12[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../auth/guards/jwt-auth.guard' or its corresponding type declarations.
+
+[7m12[0m import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+[7m  [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/marketplace/marketplace.controller.ts[0m:[93m35[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'string | undefined' is not assignable to type '{ name: string; id: string; parentId: string | null; slug: string; iconUrl: string | null; } | undefined'.
+  Type 'string' is not assignable to type '{ name: string; id: string; parentId: string | null; slug: string; iconUrl: string | null; }'.
+
+[7m35[0m       category: category || undefined,
+[7m  [0m [91m      ~~~~~~~~[0m
+
+  [96msrc/modules/marketplace/marketplace.service.ts[0m:[93m9[0m:[93m3[0m
+    [7m9[0m   category?: Category;
+    [7m [0m [96m  ~~~~~~~~[0m
+    The expected type comes from property 'category' which is declared here on type 'SearchParams'
+[96msrc/modules/marketplace/marketplace.module.ts[0m:[93m2[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.module' or its corresponding type declarations.
+
+[7m2[0m import { PrismaModule } from '../prisma/prisma.module';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/marketplace/marketplace.service.spec.ts[0m:[93m2[0m:[93m36[0m - [91merror[0m[90m TS2307: [0mCannot find module '../src/modules/marketplace/marketplace.service' or its corresponding type declarations.
+
+[7m2[0m import { MarketplaceService } from '../src/modules/marketplace/marketplace.service';
+[7m [0m [91m                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/marketplace/marketplace.service.spec.ts[0m:[93m3[0m:[93m31[0m - [91merror[0m[90m TS2307: [0mCannot find module '../src/prisma/prisma.service' or its corresponding type declarations.
+
+[7m3[0m import { PrismaService } from '../src/prisma/prisma.service';
+[7m [0m [91m                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/marketplace/marketplace.service.spec.ts[0m:[93m19[0m:[93m15[0m - [91merror[0m[90m TS1117: [0mAn object literal cannot have multiple properties with the same name.
+
+[7m19[0m               findMany: jest.fn(),
+[7m  [0m [91m              ~~~~~~~~[0m
+[96msrc/modules/marketplace/marketplace.service.ts[0m:[93m2[0m:[93m31[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.service' or its corresponding type declarations.
+
+[7m2[0m import { PrismaService } from '../prisma/prisma.service';
+[7m [0m [91m                              ~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/marketplace/marketplace.service.ts[0m:[93m6[0m:[93m19[0m - [91merror[0m[90m TS2307: [0mCannot find module 'axios' or its corresponding type declarations.
+
+[7m6[0m import axios from 'axios';
+[7m [0m [91m                  ~~~~~~~[0m
+[96msrc/modules/missions/missions.controller.ts[0m:[93m16[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../common/guards/jwt-auth.guard' or its corresponding type declarations.
+
+[7m16[0m import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+[7m  [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/missions/missions.controller.ts[0m:[93m17[0m:[93m28[0m - [91merror[0m[90m TS2307: [0mCannot find module '../common/guards/roles.guard' or its corresponding type declarations.
+
+[7m17[0m import { RolesGuard } from '../common/guards/roles.guard';
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/missions/missions.module.ts[0m:[93m2[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.module' or its corresponding type declarations.
+
+[7m2[0m import { PrismaModule } from '../prisma/prisma.module';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/missions/missions.service.spec.ts[0m:[93m2[0m:[93m33[0m - [91merror[0m[90m TS2307: [0mCannot find module '../src/modules/missions/missions.service' or its corresponding type declarations.
+
+[7m2[0m import { MissionsService } from '../src/modules/missions/missions.service';
+[7m [0m [91m                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/missions/missions.service.spec.ts[0m:[93m3[0m:[93m31[0m - [91merror[0m[90m TS2307: [0mCannot find module '../src/prisma/prisma.service' or its corresponding type declarations.
+
+[7m3[0m import { PrismaService } from '../src/prisma/prisma.service';
+[7m [0m [91m                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/missions/missions.service.ts[0m:[93m2[0m:[93m31[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.service' or its corresponding type declarations.
+
+[7m2[0m import { PrismaService } from '../prisma/prisma.service';
+[7m [0m [91m                              ~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/missions/missions.service.ts[0m:[93m3[0m:[93m10[0m - [91merror[0m[90m TS2305: [0mModule '"@prisma/client"' has no exported member 'MissionStatus'.
+
+[7m3[0m import { MissionStatus, JobStatus, Role } from '@prisma/client';
+[7m [0m [91m         ~~~~~~~~~~~~~[0m
+[96msrc/modules/missions/missions.service.ts[0m:[93m225[0m:[93m46[0m - [91merror[0m[90m TS7006: [0mParameter 'sum' implicitly has an 'any' type.
+
+[7m225[0m     const avgRating = artisanReviews.reduce((sum, r) => sum + r.rating, 0) / artisanReviews.length;
+[7m   [0m [91m                                             ~~~[0m
+[96msrc/modules/missions/missions.service.ts[0m:[93m225[0m:[93m51[0m - [91merror[0m[90m TS7006: [0mParameter 'r' implicitly has an 'any' type.
+
+[7m225[0m     const avgRating = artisanReviews.reduce((sum, r) => sum + r.rating, 0) / artisanReviews.length;
+[7m   [0m [91m                                                  ~[0m
+[96msrc/modules/notifications/notifications.controller.ts[0m:[93m14[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../auth/guards/jwt-auth.guard' or its corresponding type declarations.
+
+[7m14[0m import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+[7m  [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/notifications/notifications.module.ts[0m:[93m2[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.module' or its corresponding type declarations.
+
+[7m2[0m import { PrismaModule } from '../prisma/prisma.module';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/notifications/notifications.service.ts[0m:[93m2[0m:[93m31[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.service' or its corresponding type declarations.
+
+[7m2[0m import { PrismaService } from '../prisma/prisma.service';
+[7m [0m [91m                              ~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/reviews/reviews.controller.ts[0m:[93m13[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../common/guards/jwt-auth.guard' or its corresponding type declarations.
+
+[7m13[0m import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+[7m  [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/reviews/reviews.module.ts[0m:[93m2[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.module' or its corresponding type declarations.
+
+[7m2[0m import { PrismaModule } from '../prisma/prisma.module';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/reviews/reviews.service.ts[0m:[93m2[0m:[93m31[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.service' or its corresponding type declarations.
+
+[7m2[0m import { PrismaService } from '../prisma/prisma.service';
+[7m [0m [91m                              ~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/reviews/reviews.service.ts[0m:[93m25[0m:[93m25[0m - [91merror[0m[90m TS7006: [0mParameter 'r' implicitly has an 'any' type.
+
+[7m25[0m       data: reviews.map(r => ({
+[7m  [0m [91m                        ~[0m
+[96msrc/modules/search/search.controller.ts[0m:[93m12[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../auth/guards/jwt-auth.guard' or its corresponding type declarations.
+
+[7m12[0m import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+[7m  [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/search/search.controller.ts[0m:[93m35[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'string | undefined' is not assignable to type '{ name: string; id: string; parentId: string | null; slug: string; iconUrl: string | null; } | undefined'.
+  Type 'string' is not assignable to type '{ name: string; id: string; parentId: string | null; slug: string; iconUrl: string | null; }'.
+
+[7m35[0m       category: category || undefined,
+[7m  [0m [91m      ~~~~~~~~[0m
+
+  [96msrc/modules/search/search.service.ts[0m:[93m8[0m:[93m3[0m
+    [7m8[0m   category?: Category;
+    [7m [0m [96m  ~~~~~~~~[0m
+    The expected type comes from property 'category' which is declared here on type 'SearchArtisansParams'
+[96msrc/modules/search/search.controller.ts[0m:[93m55[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'string | undefined' is not assignable to type '{ name: string; id: string; parentId: string | null; slug: string; iconUrl: string | null; } | undefined'.
+  Type 'string' is not assignable to type '{ name: string; id: string; parentId: string | null; slug: string; iconUrl: string | null; }'.
+
+[7m55[0m       category: category || undefined,
+[7m  [0m [91m      ~~~~~~~~[0m
+
+  [96msrc/modules/search/search.service.ts[0m:[93m17[0m:[93m3[0m
+    [7m17[0m   category?: Category;
+    [7m  [0m [96m  ~~~~~~~~[0m
+    The expected type comes from property 'category' which is declared here on type 'SearchJobsParams'
+[96msrc/modules/search/search.module.ts[0m:[93m2[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.module' or its corresponding type declarations.
+
+[7m2[0m import { PrismaModule } from '../prisma/prisma.module';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/search/search.service.ts[0m:[93m2[0m:[93m31[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.service' or its corresponding type declarations.
+
+[7m2[0m import { PrismaService } from '../prisma/prisma.service';
+[7m [0m [91m                              ~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/users/users.controller.ts[0m:[93m16[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../auth/guards/jwt-auth.guard' or its corresponding type declarations.
+
+[7m16[0m import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+[7m  [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/users/users.controller.ts[0m:[93m17[0m:[93m28[0m - [91merror[0m[90m TS2307: [0mCannot find module '../auth/guards/roles.guard' or its corresponding type declarations.
+
+[7m17[0m import { RolesGuard } from '../auth/guards/roles.guard';
+[7m  [0m [91m                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/users/users.module.ts[0m:[93m2[0m:[93m30[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.module' or its corresponding type declarations.
+
+[7m2[0m import { PrismaModule } from '../prisma/prisma.module';
+[7m [0m [91m                             ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/modules/users/users.service.ts[0m:[93m2[0m:[93m31[0m - [91merror[0m[90m TS2307: [0mCannot find module '../prisma/prisma.service' or its corresponding type declarations.
+
+[7m2[0m import { PrismaService } from '../prisma/prisma.service';
+[7m [0m [91m                              ~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96msrc/prisma/prisma.service.ts[0m:[93m28[0m:[93m12[0m - [91merror[0m[90m TS7053: [0mElement implicitly has an 'any' type because expression of type 'string' can't be used to index type 'PrismaService'.
+  No index signature with a parameter of type 'string' was found on type 'PrismaService'.
+
+[7m28[0m     return this[model].update({
+[7m  [0m [91m           ~~~~~~~~~~~[0m
+[96mtest/app.e2e-spec.ts[0m:[93m4[0m:[93m26[0m - [91merror[0m[90m TS2497: [0mThis module can only be referenced with ECMAScript imports/exports by turning on the 'esModuleInterop' flag and referencing its default export.
+
+[7m4[0m import * as request from 'supertest';
+[7m [0m [91m                         ~~~~~~~~~~~[0m
+[96mtest/app.e2e-spec.ts[0m:[93m25[0m:[93m14[0m - [91merror[0m[90m TS2693: [0m'request' only refers to a type, but is being used as a value here.
+
+[7m25[0m       return request(app.getHttpServer())
+[7m  [0m [91m             ~~~~~~~[0m
+[96mtest/app.e2e-spec.ts[0m:[93m35[0m:[93m18[0m - [91merror[0m[90m TS7006: [0mParameter 'res' implicitly has an 'any' type.
+
+[7m35[0m         .expect((res) => {
+[7m  [0m [91m                 ~~~[0m
+[96mtest/app.e2e-spec.ts[0m:[93m43[0m:[93m14[0m - [91merror[0m[90m TS2693: [0m'request' only refers to a type, but is being used as a value here.
+
+[7m43[0m       return request(app.getHttpServer())
+[7m  [0m [91m             ~~~~~~~[0m
+[96mtest/app.e2e-spec.ts[0m:[93m71[0m:[93m12[0m - [91merror[0m[90m TS2693: [0m'request' only refers to a type, but is being used as a value here.
+
+[7m71[0m     return request(app.getHttpServer())
+[7m  [0m [91m           ~~~~~~~[0m
+
+Found 118 error(s).
+
+ ELIFECYCLE  Command failed with exit code 1.

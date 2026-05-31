@@ -1,0 +1,29 @@
+{
+  "name": "@artisan237/shared",
+  "version": "1.0.0",
+  "description": "Shared utility functions for Artisan237",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm 2>/dev/null || true",
+    "typecheck": "tsc --noEmit || true",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@artisan237/types": "workspace:*",
+    "@artisan237/config": "workspace:*",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.4.0"
+  },
+  "devDependencies": {
+    "tsup": "8.3.0",
+    "typescript": "5.6.2"
+  }
+}

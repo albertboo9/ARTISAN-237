@@ -1,26 +1,51 @@
 {
-  "name": "artisan-237",
-  "version": "1.0.0",
-  "description": "Parfait — là on est sur un positionnement **très solide : produit data-driven + IA + accessibilité (API gratuites)**. Je te fournis un **document d’envergure professionnel, cohérent techniquement et crédible académiquement**, avec un vrai angle **innovation + architecture + produit**.",
-  "main": "index.js",
+  "name": "artisan237",
+  "private": true,
+  "description": "Artisan237 - AI-powered marketplace for artisans in Douala, Cameroon",
+  "packageManager": "pnpm@9.12.3",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "turbo dev",
+    "dev:web": "turbo run dev --filter=@artisan237/web",
+    "dev:api": "turbo run dev --filter=@artisan237/api",
+    "dev:ml": "turbo run dev --filter=@artisan237/ml-service",
+    "dev:admin": "turbo run dev --filter=@artisan237/admin",
+    "build": "turbo build",
+    "build:web": "turbo run build --filter=@artisan237/web",
+    "build:api": "turbo run build --filter=@artisan237/api",
+    "build:ml": "turbo run build --filter=@artisan237/ml-service",
+    "test": "turbo test",
+    "test:web": "turbo run test --filter=@artisan237/web",
+    "test:api": "turbo run test --filter=@artisan237/api",
+    "lint": "turbo lint",
+    "format": "turbo format",
+    "format:check": "turbo format:check",
+    "typecheck": "turbo typecheck",
+    "db:migrate": "cd apps/api && prisma migrate dev",
+    "db:migrate:deploy": "cd apps/api && prisma migrate deploy",
+    "db:seed": "cd apps/api && prisma db seed",
+    "db:studio": "cd apps/api && prisma studio",
+    "db:push": "cd apps/api && prisma db push",
+    "db:generate": "cd apps/api && prisma generate",
+    "clean": "turbo clean && rm -rf node_modules",
+    "prepare": "husky install",
+    "pre-commit": "lint-staged"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/albertboo9/ARTISAN-237.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/albertboo9/ARTISAN-237/issues"
-  },
-  "homepage": "https://github.com/albertboo9/ARTISAN-237#readme",
   "devDependencies": {
-    "@types/node": "^25.6.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^6.0.3"
+    "turbo": "2.2.3",
+    "husky": "9.1.6",
+    "lint-staged": "15.2.10"
+  },
+  "engines": {
+    "node": ">=20.11.0",
+    "pnpm": ">=9.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }
