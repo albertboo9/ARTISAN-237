@@ -7,6 +7,7 @@ import { ThemeProvider } from 'next-themes';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { cn } from './lib/cn';
 import { Navbar } from './components/navbar';
+import { OnboardingTour } from './components/tour/onboarding-tour';
 import { useAuthStore } from './stores/auth.store';
 
 // Import Leaflet CSS
@@ -57,6 +58,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     >
       <QueryClientProvider client={queryClient}>
         {!isAuthPage && <Navbar />}
+        {!isAuthPage && <OnboardingTour />}
         <main className={cn(
           'min-h-screen',
           !isAuthPage && 'pt-16',
