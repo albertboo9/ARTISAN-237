@@ -1,96 +1,102 @@
-import { create } from 'zustand'
-import { devtools, persist } from 'zustand/middleware'
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { apiClient } from '../lib/api-client';
 
-interface APIState {
-  isLoading: boolean
-  error: string | null
-  setLoading: (loading: boolean) => void
-  setError: (error: string | null) => void
-  clearError: () => void
+export interface User {
+  id: string;
+  email: string | null;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  avatarUrl: string | null;
+  role: 'CLIENT' | 'ARTISAN' | 'ADMIN' | 'SUPPORT';
+  status: string;
 }
 
-export const useAPIStore = create<APIState>()(
-  devtools(
-    persist(
-      (set) => ({
-        isLoading: false,
-        error: null,
-        setLoading: (loading: boolean) => set({ isLoading: loading }),
-        setError: (error: string | null) => set({ error: error }),
-        clearError: () => set({ error: null }),
-      }),
-      { name: 'api-store' },
-    ),
-  ),
-)
-
-interface UIState {
-  sidebarOpen: boolean
-  setSidebarOpen: (open: boolean) => void
-  theme: 'light' | 'dark' | 'system'
-  setTheme: (theme: 'light' | 'dark' | 'system') => void
+interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  setUser: (user: User | null) => void;
+  login: (email: string, password: string) => Promise<void>;
+  register: (data: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    role: 'CLIENT' | 'ARTISAN';
+  }) => Promise<void>;
+  logout: () => Promise<void>;
+  fetchMe: () => Promise<void>;
 }
 
-export const useUIStore = create<UIState>()(
-  devtools(
-    persist(
-      (set) => ({
-        sidebarOpen: false,
-        setSidebarOpen: (open: boolean) => set({ sidebarOpen: open }),
-        theme: 'system' as 'light' | 'dark' | 'system',
-        setTheme: (theme: 'light' | 'dark' | 'system') => set({ theme: theme }),
-      }),
-      { name: 'ui-store' },
-    ),
-  ),
-)
-
-interface SearchState {
-  lastSearch: string
-  lastCategory: string
-  setLastSearch: (search: string, category: string) => void
-}
-
-export const useSearchStore = create<SearchState>()(
-  devtools(
+export const useAuthStore = create<AuthState>()(
+  persist(
     (set) => ({
-      lastSearch: '',
-      lastCategory: '',
-      setLastSearch: (search: string, category: string) => set({ lastSearch: search, lastCategory: category }),
+      user: null,
+      isAuthenticated: false,
+      isLoading: true,
+
+      setUser: (user) => set({ user, isAuthenticated: !!user }),
+
+      login: async (email, password) => {
+        const res = await apiClient<{
+          accessToken: string;
+          user: User;
+        }>('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password }),
+          skipAuth: true,
+        });
+
+        if ('accessToken' in res && 'user' in res) {
+          localStorage.setItem('accessToken', res.accessToken);
+          set({ user: res.user, isAuthenticated: true });
+        }
+      },
+
+      register: async (data) => {
+        const res = await apiClient<{ user: User }>('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify(data),
+          skipAuth: true,
+        });
+        set({ user: res.user, isAuthenticated: false });
+      },
+
+      logout: async () => {
+        try {
+          await apiClient('/auth/logout', { method: 'POST' });
+        } catch {
+          // Ignore logout errors
+        }
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        set({ user: null, isAuthenticated: false });
+      },
+
+      fetchMe: async () => {
+        try {
+          const token = localStorage.getItem('accessToken');
+          if (!token) {
+            set({ isLoading: false });
+            return;
+          }
+          const user = await apiClient<User>('/users/me');
+          set({ user, isAuthenticated: true, isLoading: false });
+        } catch {
+          localStorage.removeItem('accessToken');
+          set({ user: null, isAuthenticated: false, isLoading: false });
+        }
+      },
     }),
-  ),
-)
-
-interface MapState {
-  center: [number, number]
-  zoom: number
-  setCenter: (center: [number, number]) => void
-  setZoom: (zoom: number) => void
-}
-
-export const useMapStore = create<MapState>()(
-  devtools(
-    persist(
-      (set) => ({
-        center: [4.0511, 9.7679] as [number, number],
-        zoom: 13,
-        setCenter: (center: [number, number]) => set({ center: center }),
-        setZoom: (zoom: number) => set({ zoom: zoom }),
+    {
+      name: 'artisan237-auth',
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
       }),
-      { name: 'map-store' },
-    ),
+    },
   ),
-)
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
-}
-
-export const useAuthStore = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuthStore must be used within AuthProvider');
-  return ctx;
-};
+);

@@ -1,350 +1,398 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import { Search, MapPin, Filter, ChevronDown, Star, Clock, Navigation2 } from 'lucide-react';
-import { Input } from '@artisan237/ui/components/ui/input';
-import { Button } from '@artisan237/ui/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@artisan237/ui/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@artisan237/ui/components/ui/select';
-import { Slider } from '@artisan237/ui/components/ui/slider';
-import { Badge } from '@artisan237/ui/components/ui/badge';
-import { Skeleton } from '@artisan237/ui/components/ui/skeleton';
-import { useToast } from '@artisan237/ui/components/ui/use-toast';
-import { cn } from '@artisan237/ui';
-import Link from 'next/link';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import dynamic from 'next/dynamic';
+import { Search, SlidersHorizontal, Navigation, Star, ShieldCheck, MapPin, X } from 'lucide-react';
+import Button from '../components/ui/button';
+import { cn } from '../lib/cn';
 
-interface ArtisanCardProps {
+// Dynamically import map to avoid SSR issues
+const MapContainer = dynamic(
+  () => import('react-leaflet').then((m) => m.MapContainer),
+  { ssr: false },
+);
+const TileLayer = dynamic(
+  () => import('react-leaflet').then((m) => m.TileLayer),
+  { ssr: false },
+);
+const Marker = dynamic(
+  () => import('react-leaflet').then((m) => m.Marker),
+  { ssr: false },
+);
+const Popup = dynamic(
+  () => import('react-leaflet').then((m) => m.Popup),
+  { ssr: false },
+);
+
+interface Artisan {
   id: string;
-  businessName: string;
-  category: string;
+  firstName: string;
+  lastName: string;
+  bio: string | null;
+  lat: number;
+  lng: number;
+  isAvailable: boolean;
+  isKycVerified: boolean;
   rating: number;
-  reviewCount: number;
-  distanceKm?: number;
-  hourlyRate?: number;
-  xp: number;
-  level: number;
-  isVerified: boolean;
-  isOnline: boolean;
-  thumbnailUrl?: string;
+  totalJobs: number;
+  experienceYears: number;
+  markerColor: string;
+  distance: number | null;
+  skills: { serviceName: string; basePrice: string }[];
 }
 
-function ArtisanCard({
-  id,
-  businessName,
-  category,
-  rating,
-  reviewCount,
-  distanceKm,
-  hourlyRate,
-  xp,
-  level,
-  isVerified,
-  isOnline,
-  thumbnailUrl,
-}: ArtisanCardProps) {
-  const placeholder = `https://ui-avatars.com/api/?name=${encodeURIComponent(businessName)}&background=16a34a&color=fff&size=80`;
-
-  return (
-    <Link href={`/artisan/${id}`}>
-      <Card className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer group">
-        <div className="relative h-40 bg-gradient-to-br from-brand-500 to-brand-600">
-          <img
-            src={thumbnailUrl || placeholder}
-            alt={businessName}
-            className="w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-opacity"
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-white text-xl font-bold tracking-wider">
-              {businessName.charAt(0)}
-            </span>
-          </div>
-          {isOnline && (
-            <div className="absolute top-3 right-3 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
-          )}
-          {isVerified && (
-            <div className="absolute top-3 left-3 bg-blue-500 text-white px-2 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1">
-              ✓ Vérifié
-            </div>
-          )}
-        </div>
-
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between mb-2">
-            <div>
-              <h3 className="font-semibold text-lg leading-tight">{businessName}</h3>
-              <p className="text-sm text-muted-foreground">{category}</p>
-            </div>
-            <div className="text-right">
-              <div className="flex items-center gap-1 justify-end">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span className="font-semibold">{rating.toFixed(1)}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">{reviewCount} avis</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-            {distanceKm !== null && distanceKm !== undefined && (
-              <span className="flex items-center gap-1">
-                <Navigation2 className="h-4 w-4" />
-                {distanceKm < 1 ? `${Math.round(distanceKm * 1000)}m` : `${distanceKm.toFixed(1)} km`}
-              </span>
-            )}
-            <span className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              Niveau {level}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between pt-3 border-t">
-            <span className="text-sm font-medium text-brand-600">
-              {hourlyRate ? `${hourlyRate.toLocaleString()} FCFA/h` : 'Sur devis'}
-            </span>
-            <Badge variant="secondary">XP: {xp.toLocaleString()}</Badge>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
-
-function SkeletonGrid() {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <Card key={i} className="overflow-hidden">
-          <Skeleton className="h-40 w-full rounded-none" />
-          <CardContent className="p-4 space-y-3">
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-            <div className="flex justify-between">
-              <Skeleton className="h-4 w-1/4" />
-              <Skeleton className="h-4 w-1/4" />
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
+const DOUALA_CENTER: [number, number] = [4.0511, 9.7085];
 
 export default function MarketplacePage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { toast } = useToast();
+  const [artisans, setArtisans] = useState<Artisan[]>([]);
+  const [filteredArtisans, setFilteredArtisans] = useState<Artisan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchRadius, setSearchRadius] = useState(15);
+  const [selectedArtisan, setSelectedArtisan] = useState<Artisan | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const mapRef = useRef<any>(null);
 
-  const [category, setCategory] = useState<string | undefined>(
-    searchParams.get('category') || undefined
-  );
-  const [sortBy, setSortBy] = useState('rating');
-  const [radius, setRadius] = useState(50);
-  const [minRating, setMinRating] = useState(0);
-  const [openFilters, setOpenFilters] = useState(false);
-
-  // Geolocation
-  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-
+  // Fetch artisans
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => setLocation({ lat: 4.0511, lng: 9.7679 }), // Douala fallback
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
+    async function fetchArtisans() {
+      try {
+        const res = await fetch('http://localhost:3001/api/v1/artisans/map');
+        const data = await res.json();
+        const list = data?.data?.artisans || data?.artisans || [];
+        setArtisans(list);
+        setFilteredArtisans(list);
+      } catch (err) {
+        console.error('Failed to fetch artisans:', err);
+      } finally {
+        setIsLoading(false);
+      }
     }
+    fetchArtisans();
   }, []);
 
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['artisans', category, sortBy, radius, minRating, location],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        pageSize: '20',
-        sortBy,
-        radius: radius.toString(),
-        minRating: minRating.toString(),
-        ...(category && { category }),
-        ...(location && { lat: location.lat.toString(), lng: location.lng.toString() }),
-      });
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/marketplace/search?${params}`);
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: { message: 'Erreur réseau' } }));
-        throw new Error(err.error?.message || 'Erreur lors de la recherche');
-      }
-      return res.json();
-    },
-    staleTime: 1000 * 60 * 2,
-    enabled: !!location,
-  });
-
-  const handleSearch = () => {
-    refetch();
-  };
-
-  const searchPlaceholder = category
-    ? `Rechercher un ${category.toLowerCase()}...`
-    : 'Rechercher un artisan, service ou compétence...';
-
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <h2 className="text-2xl font-bold text-destructive mb-2">Erreur de chargement</h2>
-        <p className="text-muted-foreground">Impossible de charger les artisans. Vérifiez votre connexion.</p>
-        <Button onClick={() => refetch()} className="mt-4">Réessayer</Button>
-      </div>
-    );
-  }
+  // Update filtered artisans when radius changes
+  useEffect(() => {
+    setFilteredArtisans(artisans);
+  }, [artisans]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Hero Section */}
-      <section className="text-center mb-8">
-        <h1 className="text-4xl font-bold tracking-tight mb-3">
-          Trouvez votre{' '}
-          <span className="text-brand-500">artisan de confiance</span>
-        </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
-          Plus de 500 artisans qualifiés à Douala. Notés, vérifiés et recommandés par l'IA.
-        </p>
-
-        {/* Search Bar */}
-        <div className="max-w-2xl mx-auto flex gap-3">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder={searchPlaceholder}
-              className="pl-10 text-lg h-12"
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            />
-          </div>
-          <Button onClick={handleSearch} size="lg" className="h-12 px-8">
-            Chercher
-          </Button>
-        </div>
-      </section>
-
-      {/* Filters */}
-      <section className="mb-6">
-        <div className="flex flex-wrap items-center gap-4">
-          <Select value={category || 'all'} onValueChange={(v) => setCategory(v === 'all' ? undefined : v)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Catégorie" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les catégories</SelectItem>
-              <SelectItem value="ELECTRICIAN">⚡ Électricien</SelectItem>
-              <SelectItem value="PLUMBER">🔧 Plombier</SelectItem>
-              <SelectItem value="CARPENTER">🪚 Menuisier</SelectItem>
-              <SelectItem value="PAINTER">🎨 Peintre</SelectItem>
-              <SelectItem value="MASON">🏗️ Maçon</SelectItem>
-              <SelectItem value="MECHANIC">🚗 Mécanicien</SelectItem>
-              <SelectItem value="HAIRDRESSER">💇 Coiffeur</SelectItem>
-              <SelectItem value="TAILOR">🧵 Tailleur</SelectItem>
-              <SelectItem value="COOK">🍳 Cuisinier</SelectItem>
-              <SelectItem value="CLEANER">🧹 Nettoyeur</SelectItem>
-              <SelectItem value="TECHNICIAN">🔩 Technicien</SelectItem>
-              <SelectItem value="OTHER">📦 Autre</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Trier par" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="rating">⭐ Meilleure note</SelectItem>
-              <SelectItem value="distance">📍 Plus proche</SelectItem>
-              <SelectItem value="xp">🏆 Plus d'XP</SelectItem>
-              <SelectItem value="reviews">💬 Plus d'avis</SelectItem>
-              <SelectItem value="price">💰 Prix croissant</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button
-            variant={openFilters ? "default" : "outline"}
-            onClick={() => setOpenFilters(!openFilters)}
-            className="gap-2"
+    <div className="relative h-screen w-full">
+      {/* Loading Overlay */}
+      <AnimatePresence>
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex items-center justify-center bg-surface"
           >
-            <Filter className="h-4 w-4" />
-            Filtres avancés
-          </Button>
-        </div>
-
-        {/* Advanced Filters */}
-        {openFilters && (
-          <div className="mt-4 p-4 bg-muted rounded-lg border space-y-4">
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-medium w-24">Rayon :</span>
-              <Slider
-                min={1}
-                max={100}
-                step={5}
-                value={[radius]}
-                onValueChange={([v]) => setRadius(v)}
-                className="flex-1"
-              />
-              <span className="text-sm text-muted-foreground w-16 text-right">{radius} km</span>
+            <div className="flex flex-col items-center gap-4">
+              <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <p className="text-sm text-muted-foreground">Recherche des artisans à proximité...</p>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-medium w-24">Note min :</span>
-              <Slider
-                min={0}
-                max={5}
-                step={0.1}
-                value={[minRating]}
-                onValueChange={([v]) => setMinRating(v)}
-                className="flex-1"
-              />
-              <span className="text-sm text-muted-foreground w-16 text-right">{minRating.toFixed(1)}</span>
-            </div>
-          </div>
+          </motion.div>
         )}
-      </section>
+      </AnimatePresence>
 
-      {/* Location Indicator */}
-      {location && (
-        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-          <MapPin className="h-4 w-4" />
-          Recherche autour de votre position actuelle
-          <ChevronDown className="h-4 w-4" />
-        </div>
-      )}
-
-      {/* Results */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">
-            {data?.meta?.total ?? 0} artisan{data?.meta?.total !== 1 ? 's' : ''} trouvé{data?.meta?.total !== 1 ? 's' : ''}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {data?.meta?.page ?? 0}/{data?.meta?.totalPages ?? 0} pages
-          </p>
-        </div>
-
-        {isLoading ? (
-          <SkeletonGrid />
-        ) : data?.data?.length === 0 ? (
-          <div className="text-center py-16">
-            <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-muted-foreground mb-2">
-              Aucun artisan trouvé
-            </h3>
-            <p className="text-muted-foreground">
-              Essayez d'élargir votre recherche ou de modifier les filtres.
-            </p>
+      {/* Search & Filter Bar */}
+      <div className="absolute top-20 left-4 right-4 z-40 mx-auto max-w-2xl">
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="glass rounded-2xl p-2 shadow-lg"
+        >
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Rechercher un métier (plombier, électricien...)"
+                className="w-full h-10 pl-10 pr-4 text-sm bg-transparent border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={cn(
+                'flex items-center gap-2 px-3 h-10 rounded-xl text-sm font-medium transition-colors',
+                showFilters ? 'bg-primary text-primary-foreground' : 'bg-surface-container text-foreground hover:bg-surface-container-high',
+              )}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              <span className="hidden sm:inline">Filtres</span>
+            </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {data?.data?.map((artisan: any) => (
-              <ArtisanCard key={artisan.id} {...artisan} />
+
+          {/* Expanded Filters */}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="border-t border-border/50 mt-2 pt-3 pb-1">
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex-1 min-w-[200px]">
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                        Rayon : {searchRadius} km
+                      </label>
+                      <input
+                        type="range"
+                        min={1}
+                        max={50}
+                        value={searchRadius}
+                        onChange={(e) => setSearchRadius(Number(e.target.value))}
+                        className="w-full h-1.5 bg-surface-container rounded-full appearance-none cursor-pointer accent-primary"
+                      />
+                      <div className="flex justify-between text-[10px] text-muted-foreground mt-0.5">
+                        <span>1 km</span>
+                        <span>50 km</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container text-sm cursor-pointer hover:bg-surface-container-high transition-colors">
+                        <input type="checkbox" className="rounded border-border text-primary focus:ring-primary" />
+                        Disponibles uniquement
+                      </label>
+                      <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container text-sm cursor-pointer hover:bg-surface-container-high transition-colors">
+                        <input type="checkbox" className="rounded border-border text-primary focus:ring-primary" />
+                        KYC vérifié
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
+
+      {/* Map */}
+      <div className="h-full w-full">
+        <MapContainer
+          center={DOUALA_CENTER}
+          zoom={13}
+          className="h-full w-full"
+          zoomControl={false}
+          ref={mapRef}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          {filteredArtisans.map((artisan) => (
+            <Marker
+              key={artisan.id}
+              position={[artisan.lat, artisan.lng]}
+              eventHandlers={{
+                click: () => setSelectedArtisan(artisan),
+              }}
+            >
+              <Popup>
+                <div className="p-2 min-w-[200px]">
+                  <h3 className="font-semibold text-foreground">{artisan.firstName} {artisan.lastName}</h3>
+                  {artisan.bio && <p className="text-sm text-muted-foreground mt-1">{artisan.bio}</p>}
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-sm font-medium text-amber-500">&#9733; {artisan.rating}</span>
+                    <span className="text-xs text-muted-foreground">({artisan.totalJobs} missions)</span>
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
+
+      {/* Floating Stats & Results */}
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className="absolute bottom-6 left-4 right-4 z-40 mx-auto max-w-sm"
+      >
+        <div className="glass rounded-2xl p-4 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                <MapPin className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  {filteredArtisans.length} artisan{filteredArtisans.length > 1 ? 's' : ''} trouvé{filteredArtisans.length > 1 ? 's' : ''}
+                </p>
+                <p className="text-xs text-muted-foreground">Douala, Cameroun</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                mapRef.current?.flyTo(DOUALA_CENTER, 13);
+              }}
+            >
+              <Navigation className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Mini artisan list */}
+          <div className="mt-3 space-y-2 max-h-[120px] overflow-y-auto">
+            {filteredArtisans.slice(0, 3).map((artisan) => (
+              <button
+                key={artisan.id}
+                onClick={() => setSelectedArtisan(artisan)}
+                className="flex w-full items-center gap-3 p-2 rounded-xl hover:bg-surface-container transition-colors"
+              >
+                <div className={cn(
+                  'flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold text-white',
+                  artisan.markerColor === 'green' ? 'bg-green-500' :
+                  artisan.markerColor === 'orange' ? 'bg-amber-500' : 'bg-gray-400',
+                )}>
+                  {artisan.firstName[0]}{artisan.lastName[0]}
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-medium text-foreground">
+                      {artisan.firstName} {artisan.lastName}
+                    </span>
+                    {artisan.isKycVerified && (
+                      <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-0.5">
+                      <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+                      {artisan.rating}
+                    </span>
+                    {artisan.distance !== null && (
+                      <span>{artisan.distance.toFixed(1)} km</span>
+                    )}
+                  </div>
+                </div>
+              </button>
             ))}
           </div>
-        )}
+        </div>
+      </motion.div>
 
-        {/* Pagination would go here */}
-      </section>
+      {/* Artisan Detail Modal */}
+      <AnimatePresence>
+        {selectedArtisan && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/20 backdrop-blur-sm"
+            onClick={() => setSelectedArtisan(null)}
+          >
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              className="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Handle */}
+              <div className="flex justify-center pt-2 sm:hidden">
+                <div className="h-1.5 w-12 rounded-full bg-border" />
+              </div>
+
+              <div className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      'flex h-14 w-14 items-center justify-center rounded-2xl text-lg font-bold text-white',
+                      selectedArtisan.markerColor === 'green' ? 'bg-green-500' :
+                      selectedArtisan.markerColor === 'orange' ? 'bg-amber-500' : 'bg-gray-400',
+                    )}>
+                      {selectedArtisan.firstName[0]}{selectedArtisan.lastName[0]}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground">
+                        {selectedArtisan.firstName} {selectedArtisan.lastName}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                          <span className="text-sm font-medium">{selectedArtisan.rating}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {selectedArtisan.totalJobs} missions
+                        </span>
+                        {selectedArtisan.isKycVerified && (
+                          <span className="flex items-center gap-1 text-xs text-primary">
+                            <ShieldCheck className="h-3.5 w-3.5" />
+                            Vérifié
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedArtisan(null)}
+                    className="p-1.5 rounded-xl hover:bg-surface-container text-muted-foreground"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                {selectedArtisan.bio && (
+                  <p className="mt-4 text-sm text-muted-foreground">{selectedArtisan.bio}</p>
+                )}
+
+                {/* Skills */}
+                <div className="mt-4">
+                  <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                    Compétences
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedArtisan.skills.map((skill, i) => (
+                      <span
+                        key={i}
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary/5 text-primary border border-primary/10"
+                      >
+                        {skill.serviceName}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="mt-4 grid grid-cols-3 gap-3">
+                  <div className="p-3 rounded-xl bg-surface-container text-center">
+                    <p className="text-lg font-semibold text-foreground">{selectedArtisan.experienceYears}+</p>
+                    <p className="text-xs text-muted-foreground">Ans d'exp.</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-surface-container text-center">
+                    <p className="text-lg font-semibold text-foreground">{selectedArtisan.totalJobs}</p>
+                    <p className="text-xs text-muted-foreground">Missions</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-surface-container text-center">
+                    <p className="text-lg font-semibold text-foreground">
+                      {selectedArtisan.isAvailable ? (
+                        <span className="text-green-500">Disponible</span>
+                      ) : (
+                        <span className="text-muted-foreground">Occupé</span>
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Statut</p>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="mt-6 flex gap-3">
+                  <Button className="flex-1" size="lg">
+                    Contacter
+                  </Button>
+                  <Button variant="secondary" size="lg" className="flex-1">
+                    Voir le profil
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

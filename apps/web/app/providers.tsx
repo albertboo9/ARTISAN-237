@@ -1,20 +1,22 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from 'next-themes';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { cn } from '@artisan237/ui';
-import { TooltipProvider } from '@radix-ui/react-tooltip';
-import { SheetProvider } from '@radix-ui/react-sheet';
+import { cn } from './lib/cn';
+import { Navbar } from './components/navbar';
+import { useAuthStore } from './stores/auth.store';
 
-// Create QueryClient outside component to avoid re-creation
+// Import Leaflet CSS
+import 'leaflet/dist/leaflet.css';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 30, // 30 minutes
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 30,
       retry: 2,
       refetchOnWindowFocus: false,
     },
@@ -26,39 +28,53 @@ const queryClient = new QueryClient({
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const fetchMe = useAuthStore((s) => s.fetchMe);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    fetchMe();
+    setMounted(true);
+  }, [fetchMe]);
+
+  // Hide navbar on auth pages
+  const isAuthPage = pathname?.startsWith('/login') || pathname?.startsWith('/register');
+
+  if (!mounted) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-surface">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
-    <html lang="fr" suppressHydrationWarning>
-      <body className={cn('min-h-screen bg-background font-sans antialiased')}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-          storageKey="artisan237-theme"
-        >
-          <QueryClientProvider client={queryClient}>
-            <TooltipProvider delayDuration={200}>
-              <SheetProvider>
-                {children}
-              </SheetProvider>
-            </TooltipProvider>
-            <ReactQueryDevtools initialIsOpen={process.env.NODE_ENV === 'development'} />
-          </QueryClientProvider>
-        </ThemeProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="light"
+      enableSystem={false}
+      disableTransitionOnChange
+      storageKey="artisan237-theme"
+    >
+      <QueryClientProvider client={queryClient}>
+        {!isAuthPage && <Navbar />}
+        <main className={cn(
+          'min-h-screen',
+          !isAuthPage && 'pt-16',
+        )}>
+          {children}
+        </main>
         <Toaster
           position="top-right"
           toastOptions={{
             classNames: {
-              toast: 'bg-popover text-popover-foreground border border-border',
-              success: 'bg-green-500 text-white',
-              error: 'bg-red-500 text-white',
-              warning: 'bg-yellow-500 text-white',
-              info: 'bg-blue-500 text-white',
+              toast: 'bg-popover text-popover-foreground border border-border shadow-lg rounded-xl',
+              success: 'bg-green-500 text-white border-green-600',
+              error: 'bg-red-500 text-white border-red-600',
             },
+            duration: 4000,
           }}
         />
-      </body>
-    </html>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

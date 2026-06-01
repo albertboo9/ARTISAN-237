@@ -1,12 +1,21 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import Providers from './providers';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 export const metadata: Metadata = {
   title: {
-    default: 'Artisan237 | Marketplace',
+    default: 'Artisan237 | Marketplace Artisanale Intelligente',
     template: '%s | Artisan237',
   },
   description:
-    'Artisan237 - Trouvez les meilleurs artisans à Douala. Services qualifiés, notation vérifiée, réservation en ligne.',
+    'La marketplace intelligente des artisans à Douala, Cameroun. Trouvez le meilleur artisan près de chez vous, en toute confiance.',
   keywords: [
     'artisans Douala',
     'marketplace artisanale Cameroun',
@@ -34,3 +43,23 @@ export const metadata: Metadata = {
   },
   manifest: '/manifest.json',
 };
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#006c49',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="fr" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans antialiased`}>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}
