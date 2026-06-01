@@ -19,6 +19,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import Button from './ui/button';
+import { ThemeToggle } from './shared/theme-toggle';
 
 export function Navbar() {
   const pathname = usePathname();
@@ -84,11 +85,11 @@ export function Navbar() {
 
           {/* Right Section */}
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             {isAuthenticated ? (
               <>
                 <button className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface-container transition-colors">
                   <Bell className="h-5 w-5" />
-                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
                 </button>
 
                 {/* Profile Dropdown */}

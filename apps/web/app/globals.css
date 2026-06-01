@@ -5,11 +5,11 @@
 @layer base {
   :root {
     --background: 225 100% 99%;
-    --foreground: 214 65% 12%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 214 65% 12%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 214 65% 12%;
+    --popover-foreground: 222 47% 11%;
     --primary: 162 100% 21%;
     --primary-foreground: 0 0% 100%;
     --primary-container: 158 82% 42%;
@@ -28,8 +28,6 @@
     --input: 214 22% 82%;
     --ring: 162 100% 21%;
     --radius: 0.5rem;
-
-    /* Design System Tokens */
     --surface: 225 100% 99%;
     --surface-dim: 215 52% 77%;
     --surface-bright: 225 100% 99%;
@@ -38,44 +36,60 @@
     --surface-container: 215 100% 95%;
     --surface-container-high: 215 100% 93%;
     --surface-container-highest: 214 94% 91%;
-    --on-surface: 214 65% 12%;
+    --on-surface: 222 47% 11%;
     --on-surface-variant: 156 10% 26%;
     --inverse-surface: 213 35% 20%;
     --inverse-on-surface: 219 100% 96%;
     --outline: 156 6% 45%;
     --outline-variant: 144 13% 76%;
     --surface-tint: 162 100% 21%;
-
-    /* Glassmorphism */
-    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-bg: rgba(255, 255, 255, 0.72);
     --glass-border: rgba(226, 232, 240, 0.8);
-    --glass-shadow: rgba(30, 41, 59, 0.05);
+    --glass-shadow: rgba(30, 41, 59, 0.06);
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --background: 222 47% 6%;
+    --foreground: 210 40% 96%;
+    --card: 222 47% 8%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 96%;
     --primary: 156 65% 59%;
     --primary-foreground: 162 100% 4%;
-    --primary-container: 154 100% 16%;
+    --primary-container: 154 100% 12%;
     --primary-container-foreground: 156 65% 59%;
     --secondary: 218 17% 64%;
-    --secondary-foreground: 222 47% 11%;
-    --secondary-container: 221 18% 39%;
-    --secondary-container-foreground: 218 17% 64%;
-    --muted: 217 19% 27%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 154 100% 16%;
+    --secondary-foreground: 222 47% 6%;
+    --secondary-container: 221 18% 25%;
+    --secondary-container-foreground: 218 17% 80%;
+    --muted: 217 19% 18%;
+    --muted-foreground: 215 20% 55%;
+    --accent: 154 100% 12%;
     --accent-foreground: 156 65% 59%;
     --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 19% 27%;
-    --input: 217 19% 27%;
+    --destructive-foreground: 210 40% 96%;
+    --border: 217 19% 22%;
+    --input: 217 19% 22%;
     --ring: 156 65% 59%;
+    --surface: 222 47% 6%;
+    --surface-dim: 222 47% 4%;
+    --surface-bright: 222 47% 10%;
+    --surface-container-lowest: 222 47% 4%;
+    --surface-container-low: 222 47% 8%;
+    --surface-container: 222 47% 10%;
+    --surface-container-high: 222 47% 14%;
+    --surface-container-highest: 222 47% 18%;
+    --on-surface: 210 40% 96%;
+    --on-surface-variant: 200 10% 60%;
+    --inverse-surface: 210 40% 96%;
+    --inverse-on-surface: 222 47% 6%;
+    --outline: 200 6% 50%;
+    --outline-variant: 200 6% 25%;
+    --surface-tint: 156 65% 59%;
+    --glass-bg: rgba(17, 24, 39, 0.72);
+    --glass-border: rgba(55, 65, 81, 0.6);
+    --glass-shadow: rgba(0, 0, 0, 0.3);
   }
 }
 
@@ -84,7 +98,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
@@ -95,34 +109,19 @@
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--glass-border);
-    box-shadow: 0 4px 20px var(--glass-shadow);
+    box-shadow: 0 4px 24px var(--glass-shadow);
   }
 
   .bento-card {
-    @apply rounded-xl border border-border/50 bg-white p-6 shadow-sm transition-all duration-200;
+    @apply rounded-xl border border-border/50 bg-card p-6 shadow-sm transition-all duration-300;
   }
 
   .bento-card:hover {
     @apply shadow-md;
-    box-shadow: 0 8px 30px rgba(30, 41, 59, 0.08);
+    box-shadow: 0 8px 30px var(--glass-shadow);
   }
 
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-container;
-  }
-
-  .animate-in {
-    animation: animateIn 0.5s ease-out;
-  }
-
-  @keyframes animateIn {
-    from {
-      opacity: 0;
-      transform: translateY(12px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
   }
 }
