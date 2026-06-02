@@ -6,25 +6,24 @@ import { useAuthStore } from '../stores/auth.store';
 import { showErrorToast, showSuccessToast } from '../lib/error-handler';
 
 export function useAuth() {
-  const router = useRouter();
   const { user, isAuthenticated, isLoading, login, register, logout, fetchMe } = useAuthStore();
 
   const handleLogin = useCallback(async (email: string, password: string) => {
     try {
       const loggedInUser = await login(email, password);
       showSuccessToast('Connexion réussie !');
-      // Use the returned user (fresh data) instead of stale closure state
+      // Use window.location for a hard redirect that reinitializes all stores
       if (loggedInUser?.role === 'ARTISAN') {
-        router.push('/artisan');
+        window.location.href = '/artisan';
       } else if (loggedInUser?.role === 'ADMIN') {
-        router.push('/admin');
+        window.location.href = '/admin';
       } else {
-        router.push('/client');
+        window.location.href = '/client';
       }
     } catch (error) {
       showErrorToast(error);
     }
-  }, [login, router]);
+  }, [login]);
 
   const handleRegister = useCallback(async (data: {
     email: string;
@@ -37,17 +36,17 @@ export function useAuth() {
     try {
       await register(data);
       showSuccessToast('Inscription réussie ! Vous pouvez maintenant vous connecter.');
-      router.push('/login');
+      window.location.href = '/login';
     } catch (error) {
       showErrorToast(error);
     }
-  }, [register, router]);
+  }, [register]);
 
   const handleLogout = useCallback(async () => {
     await logout();
     showSuccessToast('Déconnexion réussie');
-    router.push('/');
-  }, [logout, router]);
+    window.location.href = '/';
+  }, [logout]);
 
   return {
     user,

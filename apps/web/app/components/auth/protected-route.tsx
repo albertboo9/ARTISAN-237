@@ -13,25 +13,26 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuthStore();
-
-  const hasToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  const hasToken = typeof window !== 'undefined' ? !!localStorage.getItem('accessToken') : false;
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && !hasToken) {
-      router.push('/login');
+    if (!hasToken) {
+      router.replace('/login');
     }
-  }, [isLoading, isAuthenticated, hasToken, router]);
+  }, [hasToken, router]);
 
+  if (!hasToken) {
+    return <LoadingScreen message="Redirection vers la connexion..." />;
+  }
+
+  // Still hydrating from persist
   if (isLoading) {
     return <LoadingScreen message="Chargement..." />;
   }
 
-  if (!isAuthenticated && !hasToken) {
-    return null;
-  }
-
+  // User loaded but doesn't have the right role
   if (requiredRole && user && !requiredRole.includes(user.role as any)) {
-    router.push('/');
+    router.replace('/');
     return null;
   }
 
