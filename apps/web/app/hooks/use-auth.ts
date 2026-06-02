@@ -15,11 +15,11 @@ export function useAuth() {
       showSuccessToast('Connexion réussie !');
       // Use the returned user (fresh data) instead of stale closure state
       if (loggedInUser?.role === 'ARTISAN') {
-        router.push('/artisan');
+        router.push('/dashboard/artisan');
       } else if (loggedInUser?.role === 'ADMIN') {
-        router.push('/admin/disputes');
+        router.push('/admin');
       } else {
-        router.push('/client');
+        router.push('/dashboard/client');
       }
     } catch (error) {
       showErrorToast(error);
