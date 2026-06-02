@@ -37,13 +37,22 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, [fetchMe]);
 
-  // Hide navbar on auth pages
-  const isAuthPage = pathname?.startsWith('/login') || pathname?.startsWith('/register');
+  // Hide navbar on auth pages AND dashboard pages (dashboard has its own sidebar)
+  const isAuthPage = pathname?.startsWith('/login') || pathname?.startsWith('/register') || pathname?.startsWith('/forgot-password');
+  const isDashboardPage = pathname?.startsWith('/artisan') || pathname?.startsWith('/client');
+  const hideNavbar = isAuthPage || isDashboardPage;
 
   if (!mounted) {
     return (
       <div className="flex h-screen items-center justify-center bg-surface">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+            <span className="text-sm font-bold text-white">A</span>
+          </div>
+          <div className="h-1 w-24 rounded-full bg-muted overflow-hidden">
+            <div className="h-full w-1/2 rounded-full bg-primary animate-pulse" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -57,11 +66,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       storageKey="artisan237-theme"
     >
       <QueryClientProvider client={queryClient}>
-        {!isAuthPage && <Navbar />}
-        {!isAuthPage && <OnboardingTour />}
+        {!hideNavbar && <Navbar />}
+        {!hideNavbar && <OnboardingTour />}
         <main className={cn(
           'min-h-screen',
-          !isAuthPage && 'pt-16',
+          !hideNavbar && 'pt-16',
         )}>
           {children}
         </main>

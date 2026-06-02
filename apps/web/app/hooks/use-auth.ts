@@ -11,17 +11,20 @@ export function useAuth() {
 
   const handleLogin = useCallback(async (email: string, password: string) => {
     try {
-      await login(email, password);
+      const loggedInUser = await login(email, password);
       showSuccessToast('Connexion réussie !');
-      if (user?.role === 'ARTISAN') {
-        router.push('/dashboard/artisan');
+      // Use the returned user (fresh data) instead of stale closure state
+      if (loggedInUser?.role === 'ARTISAN') {
+        router.push('/artisan');
+      } else if (loggedInUser?.role === 'ADMIN') {
+        router.push('/admin/disputes');
       } else {
-        router.push('/dashboard/client');
+        router.push('/client');
       }
     } catch (error) {
       showErrorToast(error);
     }
-  }, [login, router, user]);
+  }, [login, router]);
 
   const handleRegister = useCallback(async (data: {
     email: string;

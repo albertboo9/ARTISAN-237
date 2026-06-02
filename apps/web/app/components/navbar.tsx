@@ -117,7 +117,7 @@ export function Navbar() {
                       >
                         <div className="p-2">
                           <Link
-                            href={user?.role === 'ARTISAN' ? '/dashboard/artisan' : '/dashboard/client'}
+                            href={user?.role === 'ARTISAN' ? '/artisan' : '/client'}
                             className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-surface-container transition-colors"
                             onClick={() => setIsProfileOpen(false)}
                           >

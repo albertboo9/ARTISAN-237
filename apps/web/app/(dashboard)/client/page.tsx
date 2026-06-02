@@ -9,7 +9,11 @@ import { cn } from '../../lib/cn';
 import { Chart } from '../../components/ui/chart';
 import { PageTransition, StaggerContainer, StaggerItem } from '../../components/shared/page-transition';
 
+import { useAuthStore } from '../../stores/auth.store';
+import { apiClient } from '../../lib/api-client';
+
 export default function ClientDashboard() {
+  const { user } = useAuthStore();
   const [stats, setStats] = useState({ active: 0, quotes: 0, inProgress: 0, completed: 0 });
   const [missions, setMissions] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
@@ -17,9 +21,9 @@ export default function ClientDashboard() {
 
   useEffect(() => {
     async function fetchData() {
+      if (!user?.id) return;
       try {
-        const res = await fetch('http://localhost:3001/api/v1/jobs');
-        const json = await res.json();
+        const json = await apiClient<any>(`/jobs?clientId=${user.id}`);
         const list = json?.data || json || [];
         setMissions(list.slice(0, 5));
 
@@ -64,7 +68,7 @@ export default function ClientDashboard() {
             <h1 className="text-2xl font-bold text-foreground">Tableau de bord</h1>
             <p className="text-muted-foreground">Gérez vos missions et suivez vos projets</p>
           </div>
-          <Link href="/dashboard/client/create">
+          <Link href="/client/create">
             <Button><Plus className="h-4 w-4 mr-1.5" /> Nouvelle mission</Button>
           </Link>
         </div>
@@ -115,13 +119,13 @@ export default function ClientDashboard() {
                   <div className="bento-card flex items-center gap-4">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10"><Briefcase className="h-5 w-5 text-primary" /></div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium truncate">{m.description || 'Mission'}</h3>
+                      <h3 className="text-sm font-medium truncate">{m.title || 'Mission'}</h3>
                       <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium mt-1', 
                         m.status === 'SEARCHING' ? 'bg-amber-100 text-amber-700' : 
                         m.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
                       )}>{m.status || 'SEARCHING'}</span>
                     </div>
-                    <Link href={`/dashboard/client/missions/${m.id}`}><Button variant="ghost" size="sm"><ArrowRight className="h-4 w-4" /></Button></Link>
+                    <Link href={`/client/missions/${m.id}`}><Button variant="ghost" size="sm"><ArrowRight className="h-4 w-4" /></Button></Link>
                   </div>
                 </StaggerItem>
               ))}

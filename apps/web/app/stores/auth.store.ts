@@ -18,7 +18,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   setUser: (user: User | null) => void;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   register: (data: {
     email: string;
     password: string;
@@ -43,6 +43,7 @@ export const useAuthStore = create<AuthState>()(
       login: async (email, password) => {
         const res = await apiClient<{
           accessToken: string;
+          refreshToken?: string;
           user: User;
         }>('/auth/login', {
           method: 'POST',
@@ -52,8 +53,12 @@ export const useAuthStore = create<AuthState>()(
 
         if ('accessToken' in res && 'user' in res) {
           localStorage.setItem('accessToken', res.accessToken);
+          if (res.refreshToken) {
+            localStorage.setItem('refreshToken', res.refreshToken);
+          }
           set({ user: res.user, isAuthenticated: true });
         }
+        return res.user;
       },
 
       register: async (data) => {

@@ -34,7 +34,7 @@ export default function MissionsPage() {
           <h1 className="text-2xl font-bold">Mes missions</h1>
           <p className="text-muted-foreground">Suivez l'état de vos demandes</p>
         </div>
-        <Link href="/dashboard/client/create"><Button><Plus className="h-4 w-4 mr-1.5" /> Nouvelle mission</Button></Link>
+        <Link href="/client/create"><Button><Plus className="h-4 w-4 mr-1.5" /> Nouvelle mission</Button></Link>
       </div>
 
       {isLoading ? (
@@ -44,7 +44,7 @@ export default function MissionsPage() {
           <Briefcase className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
           <h3 className="font-semibold text-lg">Aucune mission</h3>
           <p className="text-muted-foreground mb-6">Créez votre première mission pour trouver un artisan</p>
-          <Link href="/dashboard/client/create"><Button>Créer une mission</Button></Link>
+          <Link href="/client/create"><Button>Créer une mission</Button></Link>
         </div>
       ) : (
         <div className="space-y-3">
@@ -59,7 +59,7 @@ export default function MissionsPage() {
                   {mission.status || 'SEARCHING'}
                 </span>
               </div>
-              <Link href={`/dashboard/client/missions/${mission.id}`}><Button variant="ghost" size="sm"><ArrowRight className="h-4 w-4" /></Button></Link>
+              <Link href={`/client/missions/${mission.id}`}><Button variant="ghost" size="sm"><ArrowRight className="h-4 w-4" /></Button></Link>
             </motion.div>
           ))}
         </div>
