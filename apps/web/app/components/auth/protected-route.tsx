@@ -14,21 +14,23 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuthStore();
 
+  const hasToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && !hasToken) {
       router.push('/login');
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, hasToken, router]);
 
   if (isLoading) {
     return <LoadingScreen message="Chargement..." />;
   }
 
-  if (!isAuthenticated || !user) {
+  if (!isAuthenticated && !hasToken) {
     return null;
   }
 
-  if (requiredRole && !requiredRole.includes(user.role as any)) {
+  if (requiredRole && user && !requiredRole.includes(user.role as any)) {
     router.push('/');
     return null;
   }
