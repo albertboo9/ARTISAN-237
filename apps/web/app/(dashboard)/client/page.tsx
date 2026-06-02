@@ -1,114 +1,134 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Plus, Briefcase, FileText, Clock, ArrowRight, TrendingUp, Star, MapPin } from 'lucide-react';
 import Button from '../../components/ui/button';
 import { cn } from '../../lib/cn';
+import { Chart } from '../../components/ui/chart';
+import { PageTransition, StaggerContainer, StaggerItem } from '../../components/shared/page-transition';
 
 export default function ClientDashboard() {
+  const [stats, setStats] = useState({ active: 0, quotes: 0, inProgress: 0, completed: 0 });
+  const [missions, setMissions] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch('http://localhost:3001/api/v1/jobs');
+        const json = await res.json();
+        const list = json?.data || json || [];
+        setMissions(list.slice(0, 5));
+
+        setStats({
+          active: list.filter((j: any) => j.status === 'SEARCHING' || j.status === 'QUOTE_ACCEPTED').length,
+          quotes: list.filter((j: any) => j.status === 'QUOTE_ACCEPTED').length,
+          inProgress: list.filter((j: any) => j.status === 'IN_PROGRESS').length,
+          completed: list.filter((j: any) => j.status === 'COMPLETED').length,
+        });
+
+        // Mock chart data for now - will be replaced with real stats API
+        setChartData([
+          { name: 'Jan', missions: 4, devis: 2 },
+          { name: 'Fév', missions: 3, devis: 5 },
+          { name: 'Mar', missions: 6, devis: 3 },
+          { name: 'Avr', missions: 8, devis: 4 },
+          { name: 'Mai', missions: 5, devis: 7 },
+          { name: 'Jun', missions: 7, devis: 5 },
+        ]);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  const statItems = [
+    { label: 'Missions actives', value: stats.active.toString(), icon: Briefcase, color: 'bg-blue-500/10 text-blue-600' },
+    { label: 'Devis reçus', value: stats.quotes.toString(), icon: FileText, color: 'bg-amber-500/10 text-amber-600' },
+    { label: 'En cours', value: stats.inProgress.toString(), icon: Clock, color: 'bg-green-500/10 text-green-600' },
+    { label: 'Complétées', value: stats.completed.toString(), icon: TrendingUp, color: 'bg-purple-500/10 text-purple-600' },
+  ];
+
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Tableau de bord</h1>
-          <p className="text-muted-foreground">Gérez vos missions et suivez vos projets</p>
-        </div>
-        <Link href="/dashboard/client/create">
-          <Button><Plus className="h-4 w-4 mr-1.5" /> Nouvelle mission</Button>
-        </Link>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Missions actives', value: '3', icon: Briefcase, color: 'bg-blue-500/10 text-blue-600' },
-          { label: 'Devis reçus', value: '12', icon: FileText, color: 'bg-amber-500/10 text-amber-600' },
-          { label: 'En cours', value: '2', icon: Clock, color: 'bg-green-500/10 text-green-600' },
-          { label: 'Complétées', value: '28', icon: TrendingUp, color: 'bg-purple-500/10 text-purple-600' },
-        ].map((stat, i) => {
-          const Icon = stat.icon;
-          return (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="bento-card"
-            >
-              <div className="flex items-center gap-4">
-                <div className={cn('flex h-12 w-12 items-center justify-center rounded-xl', stat.color)}>
-                  <Icon className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {/* Recent missions + Quick actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Missions récentes</h2>
-          {[1, 2, 3].map((i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="bento-card flex items-center gap-4"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                <Briefcase className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-medium text-foreground truncate">Réparation plomberie salle de bain</h3>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-100 text-amber-700">En attente</span>
-                  <span className="text-xs text-muted-foreground">Il y a 2 jours</span>
-                </div>
-              </div>
-              <Link href={`/dashboard/client/missions`}>
-                <Button variant="ghost" size="sm"><ArrowRight className="h-4 w-4" /></Button>
-              </Link>
-            </motion.div>
-          ))}
+    <PageTransition>
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Tableau de bord</h1>
+            <p className="text-muted-foreground">Gérez vos missions et suivez vos projets</p>
+          </div>
+          <Link href="/dashboard/client/create">
+            <Button><Plus className="h-4 w-4 mr-1.5" /> Nouvelle mission</Button>
+          </Link>
         </div>
 
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Artisans recommandés</h2>
-          {[1, 2].map((i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="bento-card"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary font-semibold text-sm">
-                  PT
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-foreground">Paul Tchuente</h3>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-0.5"><Star className="h-3 w-3 text-amber-500" /> 4.8</span>
-                    <span><MapPin className="h-3 w-3 inline" /> 2.3 km</span>
+        {/* Stats */}
+        <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {statItems.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <StaggerItem key={stat.label}>
+                <div className="bento-card">
+                  <div className="flex items-center gap-4">
+                    <div className={cn('flex h-12 w-12 items-center justify-center rounded-xl', stat.color)}>
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{isLoading ? '-' : stat.value}</p>
+                      <p className="text-sm text-muted-foreground">{stat.label}</p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex h-7 items-center px-2 rounded-md bg-primary/5 text-[10px] font-semibold text-primary">
-                  Match 96%
-                </div>
-              </div>
-            </motion.div>
-          ))}
+              </StaggerItem>
+            );
+          })}
+        </StaggerContainer>
+
+        {/* Chart */}
+        <div className="bento-card">
+          <h3 className="font-semibold text-foreground mb-4">Activité mensuelle</h3>
+          <Chart data={chartData} lines={[
+            { key: 'missions', color: '#006c49', label: 'Missions' },
+            { key: 'devis', color: '#f59e0b', label: 'Devis' },
+          ]} type="area" />
         </div>
+
+        {/* Missions récentes */}
+        <StaggerContainer>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Missions récentes</h2>
+          {missions.length === 0 && !isLoading ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Briefcase className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p>Aucune mission pour le moment</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {missions.map((m: any, i: number) => (
+                <StaggerItem key={m.id || i}>
+                  <div className="bento-card flex items-center gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10"><Briefcase className="h-5 w-5 text-primary" /></div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-medium truncate">{m.description || 'Mission'}</h3>
+                      <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium mt-1', 
+                        m.status === 'SEARCHING' ? 'bg-amber-100 text-amber-700' : 
+                        m.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                      )}>{m.status || 'SEARCHING'}</span>
+                    </div>
+                    <Link href={`/dashboard/client/missions/${m.id}`}><Button variant="ghost" size="sm"><ArrowRight className="h-4 w-4" /></Button></Link>
+                  </div>
+                </StaggerItem>
+              ))}
+            </div>
+          )}
+        </StaggerContainer>
       </div>
-    </div>
+    </PageTransition>
   );
 }
