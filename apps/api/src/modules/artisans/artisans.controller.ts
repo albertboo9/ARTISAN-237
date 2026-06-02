@@ -87,6 +87,15 @@ export class ArtisansController {
   // ──────────────────────────────────────────────────
   // PROTECTED : Profil artisan
   // ──────────────────────────────────────────────────
+  @ApiOperation({ summary: "Get Artisan Profile" })
+  @ApiBearerAuth()
+  @Roles(Role.ARTISAN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get("profile")
+  async getProfile(@Req() req: any) {
+    return this.artisansService.getProfile(req.user.sub);
+  }
+
   @ApiOperation({ summary: "Update Artisan Profile (Bio, Experience, Skills)" })
   @ApiBearerAuth()
   @Roles(Role.ARTISAN)

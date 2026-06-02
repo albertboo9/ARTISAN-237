@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Get, Patch, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Param, Get, Patch, UseGuards, Req, Query } from '@nestjs/common';
 import { QuotesService } from './quotes.service';
 import { CreateQuoteDto, UpdateQuoteStatusDto } from './dto/quotes.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -23,6 +23,18 @@ export class QuotesController {
   @Get('job/:jobId')
   async getQuotesForJob(@Param('jobId') jobId: string) {
     return this.quotesService.getQuotesForJob(jobId);
+  }
+
+  @ApiOperation({ summary: 'Get quotes with optional filters (artisanId, clientId, status)' })
+  @Get()
+  async getQuotes(
+    @Req() req: any,
+    @Query('artisanId') artisanId?: string,
+    @Query('clientId') clientId?: string,
+    @Query('status') status?: any,
+  ) {
+    // For a real production app, ensure users can only see their own quotes.
+    return this.quotesService.findQuotes({ artisanId, clientId, status });
   }
 
   @ApiOperation({ summary: 'Accept or reject a quote (Client only)' })

@@ -82,4 +82,26 @@ export class QuotesService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  async findQuotes(filters: { artisanId?: string; clientId?: string; status?: QuoteStatus }) {
+    const where: any = {};
+    if (filters.artisanId) {
+      where.artisan = { userId: filters.artisanId };
+    }
+    if (filters.clientId) {
+      where.job = { clientId: filters.clientId };
+    }
+    if (filters.status) {
+      where.status = filters.status;
+    }
+
+    return this.prisma.quote.findMany({
+      where,
+      include: {
+        job: { include: { service: true, client: { select: { firstName: true, lastName: true, avatarUrl: true } } } },
+        artisan: { include: { user: { select: { firstName: true, lastName: true, avatarUrl: true } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }

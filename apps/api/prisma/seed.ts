@@ -1,5 +1,6 @@
-import { PrismaClient, Role, UserStatus, JobStatus, EscrowStatus, QuoteStatus, DisputeStatus } from '@prisma/client';
+import { PrismaClient, Role, UserStatus, JobStatus, EscrowStatus, QuoteStatus, MediaType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { fakerFR as faker } from '@faker-js/faker';
 
 const prisma = new PrismaClient();
 
@@ -8,8 +9,14 @@ async function main() {
 
   const passwordHash = await bcrypt.hash('Password123!', 12);
 
-  // 1. Purge (Optionnel - attention en prod !)
+  // 1. Purge (Optionnel - décommenter pour réinitialiser la DB à chaque seed)
+  // await prisma.jobMedia.deleteMany();
+  // await prisma.invoiceItem.deleteMany();
+  // await prisma.invoice.deleteMany();
+  // await prisma.escrowAccount.deleteMany();
+  // await prisma.quote.deleteMany();
   // await prisma.job.deleteMany();
+  // await prisma.artisanSkill.deleteMany();
   // await prisma.artisanProfile.deleteMany();
   // await prisma.user.deleteMany();
   // await prisma.service.deleteMany();
@@ -26,21 +33,24 @@ async function main() {
     },
   });
 
-  const srvPlomberie = await prisma.service.create({
-    data: {
-      categoryId: catBatiment.id,
-      name: 'Plomberie Générale',
-      basePrice: 5000,
-    }
+  const catCleaning = await prisma.category.upsert({
+    where: { slug: 'nettoyage' },
+    update: {},
+    create: {
+      name: 'Nettoyage & Entretien',
+      slug: 'nettoyage',
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/2006/2006450.png',
+    },
   });
 
-  const srvElectricite = await prisma.service.create({
-    data: {
-      categoryId: catBatiment.id,
-      name: 'Installation Électrique',
-      basePrice: 10000,
-    }
-  });
+  const services = [
+    await prisma.service.create({ data: { categoryId: catBatiment.id, name: 'Plomberie Générale', basePrice: 5000 } }),
+    await prisma.service.create({ data: { categoryId: catBatiment.id, name: 'Installation Électrique', basePrice: 10000 } }),
+    await prisma.service.create({ data: { categoryId: catBatiment.id, name: 'Peinture', basePrice: 3000 } }),
+    await prisma.service.create({ data: { categoryId: catBatiment.id, name: 'Menuiserie', basePrice: 7000 } }),
+    await prisma.service.create({ data: { categoryId: catCleaning.id, name: 'Ménage à domicile', basePrice: 4000 } }),
+    await prisma.service.create({ data: { categoryId: catCleaning.id, name: 'Jardinage', basePrice: 6000 } }),
+  ];
 
   // 3. Création de l'Admin
   await prisma.user.upsert({
@@ -57,116 +67,206 @@ async function main() {
     }
   });
 
-  // 4. Création des Clients (Douala)
-  const client1 = await prisma.user.upsert({
-    where: { email: 'jean.client@gmail.com' },
+  // 4. Génération Massive des Clients
+  const clients = [];
+  console.log('Création de 15 clients...');
+  for (let i = 0; i < 15; i++) {
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
+    const email = `client${i}@artisan237.com`;
+    
+    const client = await prisma.user.upsert({
+      where: { email },
+      update: {},
+      create: {
+        email,
+        phoneNumber: `23769${faker.string.numeric(7)}`,
+        firstName,
+        lastName,
+        avatarUrl: faker.image.avatar(),
+        passwordHash,
+        role: Role.CLIENT,
+        status: UserStatus.ACTIVE,
+      }
+    });
+    clients.push(client);
+  }
+
+  // 5. Génération Massive des Artisans
+  const artisans = [];
+  console.log('Création de 30 artisans...');
+  for (let i = 0; i < 30; i++) {
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
+    const email = `artisan${i}@artisan237.com`;
+    // Douala coordinates range: lat 4.0 ~ 4.1, lng 9.65 ~ 9.8
+    const lat = 4.0 + Math.random() * 0.1;
+    const lng = 9.65 + Math.random() * 0.15;
+    const totalJobs = faker.number.int({ min: 0, max: 50 });
+    
+    // Pick 1-3 random services
+    const artisanServices = faker.helpers.arrayElements(services, faker.number.int({ min: 1, max: 3 }));
+    
+    const artisan = await prisma.user.upsert({
+      where: { email },
+      update: {},
+      create: {
+        email,
+        phoneNumber: `23767${faker.string.numeric(7)}`,
+        firstName,
+        lastName,
+        avatarUrl: faker.image.avatar(),
+        passwordHash,
+        role: Role.ARTISAN,
+        status: UserStatus.ACTIVE,
+        artisanProfile: {
+          create: {
+            bio: faker.person.bio(),
+            experienceYears: faker.number.int({ min: 1, max: 20 }),
+            rating: faker.number.float({ min: 3.5, max: 5.0, fractionDigits: 1 }),
+            totalJobs,
+            lastLat: lat,
+            lastLng: lng,
+            skills: {
+              create: artisanServices.map(s => ({ serviceId: s.id }))
+            }
+          }
+        },
+        ...(Math.random() > 0.5 && {
+          kycVerifications: {
+            create: {
+              provider: 'DIDIT',
+              externalId: `did_mock_${faker.string.alphanumeric(10)}`,
+              status: 'VERIFIED',
+              verifiedAt: new Date(),
+            }
+          }
+        })
+      },
+      include: { artisanProfile: true }
+    });
+    artisans.push(artisan);
+  }
+
+  // 6. Création de Jobs aléatoires
+  console.log('Création de 40 missions (jobs)...');
+  for (let i = 0; i < 40; i++) {
+    const client = faker.helpers.arrayElement(clients);
+    const service = faker.helpers.arrayElement(services);
+    
+    const lat = 4.0 + Math.random() * 0.1;
+    const lng = 9.65 + Math.random() * 0.15;
+    
+    const status = faker.helpers.arrayElement([
+      JobStatus.SEARCHING, JobStatus.QUOTE_ACCEPTED, JobStatus.IN_PROGRESS, JobStatus.COMPLETED
+    ]);
+
+    const job = await prisma.job.create({
+      data: {
+        clientId: client.id,
+        serviceId: service.id,
+        description: faker.lorem.paragraph(),
+        lat,
+        lng,
+        address: `${faker.location.streetAddress()}, Douala`,
+        status,
+        createdAt: faker.date.recent({ days: 30 }),
+      }
+    });
+
+    // Generate quotes for the job
+    const numQuotes = faker.number.int({ min: 1, max: 4 });
+    const jobArtisans = faker.helpers.arrayElements(artisans, numQuotes);
+    
+    let acceptedQuoteId: string | null = null;
+    
+    for (let j = 0; j < numQuotes; j++) {
+      const isAccepted = status !== JobStatus.SEARCHING && j === 0;
+      const quoteStatus = isAccepted ? QuoteStatus.ACCEPTED : 
+                         status !== JobStatus.SEARCHING ? QuoteStatus.REJECTED : QuoteStatus.PENDING;
+                         
+      const estPrice = faker.number.int({ min: 5000, max: 150000 });
+      const labor = Math.floor(estPrice * 0.6);
+      const materials = estPrice - labor;
+      
+      const quote = await prisma.quote.create({
+        data: {
+          jobId: job.id,
+          artisanId: jobArtisans[j].artisanProfile!.id,
+          estimatedPrice: estPrice,
+          laborPrice: labor,
+          materialsPrice: materials,
+          description: faker.lorem.sentence(),
+          status: quoteStatus,
+          createdAt: faker.date.recent({ days: 5 }),
+        }
+      });
+      
+      if (isAccepted) acceptedQuoteId = quote.id;
+    }
+    
+    // Create Escrow if quote is accepted
+    if (acceptedQuoteId) {
+      const quote = await prisma.quote.findUnique({ where: { id: acceptedQuoteId } });
+      await prisma.escrowAccount.create({
+        data: {
+          jobId: job.id,
+          amount: quote!.estimatedPrice,
+          status: status === JobStatus.COMPLETED ? EscrowStatus.RELEASED : EscrowStatus.FUNDED,
+          stripePi: `pi_mock_${faker.string.alphanumeric(15)}`,
+          fundedAt: faker.date.recent({ days: 3 }),
+        }
+      });
+    }
+  }
+
+  // 7. Ensure test accounts exist for the user
+  await prisma.user.upsert({
+    where: { email: 'artisan@artisan237.com' },
     update: {},
     create: {
-      email: 'jean.client@gmail.com',
-      phoneNumber: '237690000001',
-      firstName: 'Jean',
-      lastName: 'Dupont',
+      email: 'artisan@artisan237.com',
+      phoneNumber: '237670000999',
+      firstName: 'Test',
+      lastName: 'Artisan',
+      passwordHash,
+      role: Role.ARTISAN,
+      status: UserStatus.ACTIVE,
+      avatarUrl: faker.image.avatar(),
+      artisanProfile: {
+        create: {
+          bio: 'Compte de test artisan.',
+          experienceYears: 5,
+          rating: 5.0,
+          totalJobs: 10,
+          lastLat: 4.0511,
+          lastLng: 9.7085,
+          skills: { create: [{ serviceId: services[0].id }] }
+        }
+      }
+    }
+  });
+
+  await prisma.user.upsert({
+    where: { email: 'client@artisan237.com' },
+    update: {},
+    create: {
+      email: 'client@artisan237.com',
+      phoneNumber: '237690000999',
+      firstName: 'Test',
+      lastName: 'Client',
       passwordHash,
       role: Role.CLIENT,
       status: UserStatus.ACTIVE,
-    }
-  });
-
-  // 5. Création des Artisans
-  const artisan1 = await prisma.user.upsert({
-    where: { email: 'paul.plombier@gmail.com' },
-    update: {},
-    create: {
-      email: 'paul.plombier@gmail.com',
-      phoneNumber: '237670000002',
-      firstName: 'Paul',
-      lastName: 'Tchuente',
-      passwordHash,
-      role: Role.ARTISAN,
-      status: UserStatus.ACTIVE,
-      artisanProfile: {
-        create: {
-          bio: 'Plombier expérimenté basé à Akwa. 10 ans de métier.',
-          experienceYears: 10,
-          rating: 4.8,
-          totalJobs: 15,
-          lastLat: 4.0511, // Akwa, Douala
-          lastLng: 9.7085,
-          skills: {
-            create: [
-              { serviceId: srvPlomberie.id }
-            ]
-          }
-        }
-      }
-    }
-  });
-
-  const artisan2 = await prisma.user.upsert({
-    where: { email: 'marc.electricien@gmail.com' },
-    update: {},
-    create: {
-      email: 'marc.electricien@gmail.com',
-      phoneNumber: '237670000003',
-      firstName: 'Marc',
-      lastName: 'Ndjonga',
-      passwordHash,
-      role: Role.ARTISAN,
-      status: UserStatus.ACTIVE,
-      artisanProfile: {
-        create: {
-          bio: 'Électricien qualifié résident à Deido.',
-          experienceYears: 5,
-          rating: 4.5,
-          totalJobs: 8,
-          lastLat: 4.0600, // Deido, Douala
-          lastLng: 9.7100,
-          skills: {
-            create: [
-              { serviceId: srvElectricite.id }
-            ]
-          }
-        }
-      }
-    }
-  });
-
-  // 6. Création d'un Job avec Quote et Escrow
-  const job1 = await prisma.job.create({
-    data: {
-      clientId: client1.id,
-      serviceId: srvPlomberie.id,
-      description: 'Fuite d\'eau sous l\'évier de la cuisine à Bonapriso.',
-      lat: 4.0300, // Bonapriso
-      lng: 9.6900,
-      address: 'Rue des Palmiers, Bonapriso',
-      status: JobStatus.IN_PROGRESS, // On simule un job déjà en cours
-      quotes: {
-        create: {
-          artisanId: (await prisma.artisanProfile.findUnique({ where: { userId: artisan1.id } }))!.id,
-          estimatedPrice: 15000,
-          laborPrice: 10000,
-          materialsPrice: 5000,
-          description: 'Remplacement du siphon et main d\'oeuvre.',
-          status: QuoteStatus.ACCEPTED,
-        }
-      },
-      escrow: {
-        create: {
-          amount: 15000,
-          status: EscrowStatus.FUNDED,
-          stripePi: 'pi_mock_123456789',
-          fundedAt: new Date(),
-        }
-      }
+      avatarUrl: faker.image.avatar(),
     }
   });
 
   console.log('✅ Base de données peuplée avec succès !');
-  console.log('Données créées :');
+  console.log('Données de test principales :');
   console.log(`- Admin: admin@artisan237.com / Password123!`);
-  console.log(`- Client: jean.client@gmail.com / Password123!`);
-  console.log(`- Artisan: paul.plombier@gmail.com / Password123!`);
+  console.log(`- Client: client@artisan237.com / Password123!`);
+  console.log(`- Artisan: artisan@artisan237.com / Password123!`);
 }
 
 main()

@@ -33,7 +33,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       isAuthenticated: false,
       isLoading: true,
@@ -44,21 +44,24 @@ export const useAuthStore = create<AuthState>()(
         const res = await apiClient<{
           accessToken: string;
           refreshToken?: string;
-          user: User;
         }>('/auth/login', {
           method: 'POST',
           body: JSON.stringify({ email, password }),
           skipAuth: true,
         });
 
-        if ('accessToken' in res && 'user' in res) {
+        if (res.accessToken) {
           localStorage.setItem('accessToken', res.accessToken);
           if (res.refreshToken) {
             localStorage.setItem('refreshToken', res.refreshToken);
           }
-          set({ user: res.user, isAuthenticated: true, isLoading: false });
+          
+          // Fetch user profile after getting the token
+          await get().fetchMe();
+          return get().user;
         }
-        return res.user;
+        
+        throw new Error('Token non reçu du serveur');
       },
 
       register: async (data) => {

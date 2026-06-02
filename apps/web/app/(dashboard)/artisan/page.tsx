@@ -122,9 +122,17 @@ export default function ArtisanDashboard() {
           </div>
           
           {quotes.length === 0 ? (
-            <div className="bento-card text-center py-8">
-              <FileText className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">Vous n'avez pas encore soumis de devis.</p>
+            <div className="bento-card text-center py-12 flex flex-col items-center justify-center border-dashed border-2 bg-surface-container/30">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <FileText className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-1">Aucun devis pour le moment</h3>
+              <p className="text-sm text-muted-foreground max-w-sm mb-6">
+                Vous n'avez pas encore soumis de devis. Allez sur la carte pour trouver des missions proches de chez vous.
+              </p>
+              <Link href="/">
+                <Button>Trouver des missions</Button>
+              </Link>
             </div>
           ) : (
             quotes.slice(0, 3).map((quote, i) => (
@@ -149,7 +157,7 @@ export default function ArtisanDashboard() {
                     )}>
                       {quote.status || 'PENDING'}
                     </span>
-                    <span className="text-xs text-muted-foreground">{quote.amount?.toLocaleString()} FCFA</span>
+                    <span className="text-xs text-muted-foreground font-semibold">{Number(quote.estimatedPrice || 0).toLocaleString()} FCFA</span>
                   </div>
                 </div>
                 <Link href="/artisan/devis">
@@ -164,9 +172,13 @@ export default function ArtisanDashboard() {
           <h2 className="text-lg font-semibold text-foreground">Votre profil</h2>
           <div className="bento-card space-y-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold text-lg">
-                {user?.firstName?.[0] || 'A'}{user?.lastName?.[0] || 'A'}
-              </div>
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="Avatar" className="h-14 w-14 rounded-2xl object-cover border-2 border-primary/20" />
+              ) : (
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold text-lg">
+                  {user?.firstName?.[0] || 'A'}{user?.lastName?.[0] || 'A'}
+                </div>
+              )}
               <div>
                 <h3 className="font-semibold text-foreground">{user?.firstName} {user?.lastName}</h3>
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">

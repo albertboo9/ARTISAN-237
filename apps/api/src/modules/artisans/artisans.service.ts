@@ -158,6 +158,33 @@ export class ArtisansService {
   // PROFIL
   // ──────────────────────────────────────────────────
 
+  async getProfile(userId: string) {
+    const profile = await this.prisma.artisanProfile.findUnique({
+      where: { userId },
+      include: {
+        skills: {
+          include: { service: true }
+        },
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            kycVerifications: true,
+            email: true,
+            phoneNumber: true,
+          }
+        }
+      }
+    });
+    
+    if (!profile) {
+      throw new BadRequestException("Profil artisan introuvable");
+    }
+    
+    return profile;
+  }
+
   async updateProfile(userId: string, dto: UpdateArtisanProfileDto) {
     let profile = await this.prisma.artisanProfile.findUnique({
       where: { userId },

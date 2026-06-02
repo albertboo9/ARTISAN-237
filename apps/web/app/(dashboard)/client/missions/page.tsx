@@ -20,9 +20,15 @@ export default function MissionsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/v1/jobs')
+    const token = localStorage.getItem('accessToken');
+    fetch('http://localhost:3001/api/v1/jobs', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
       .then(r => r.json())
-      .then(d => setMissions(d?.data || d || []))
+      .then(d => {
+        const list = d?.data || d || [];
+        setMissions(Array.isArray(list) ? list : []);
+      })
       .catch(() => {})
       .finally(() => setIsLoading(false));
   }, []);

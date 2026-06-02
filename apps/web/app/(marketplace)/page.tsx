@@ -7,15 +7,6 @@ import { Search, SlidersHorizontal, Navigation, Star, ShieldCheck, MapPin, X } f
 import Button from '../components/ui/button';
 import { cn } from '../lib/cn';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
-// Fix Leaflet default icon path (Next.js serves from /)
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
 
 // Lazy load Leaflet map components
 const MapContainer = dynamic(() => import('react-leaflet').then((m) => m.MapContainer), { ssr: false });
@@ -56,6 +47,17 @@ export default function MarketplacePage() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Fix Leaflet default icon path on client side only
+    if (typeof window !== 'undefined') {
+      import('leaflet').then((L) => {
+        delete (L.Icon.Default.prototype as any)._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        });
+      });
+    }
     setMounted(true);
   }, []);
 
@@ -184,26 +186,58 @@ export default function MarketplacePage() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <ZoomControl position="bottomright" />
-          {filtered.map((a) => (
-            <Marker
-              key={a.id || a.userId}
-              position={[a.lat, a.lng]}
-              eventHandlers={{ click: () => setSelected(a) }}
-            >
-              <Popup>
-                <div className="p-1 min-w-[160px]">
-                  <h3 className="font-semibold text-sm">
-                    {a.firstName} {a.lastName}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">{a.bio || ''}</p>
-                  <div className="flex items-center gap-2 mt-1.5 text-xs">
-                    <span className="text-amber-500">&#9733; {a.rating}</span>
-                    <span className="text-muted-foreground">({a.totalJobs})</span>
-                  </div>
+          {filtered.map((a) => {
+            let icon: any = undefined;
+            if (typeof window !== 'undefined') {
+              const L = require('leaflet');
+              const bgColor =
+                a.markerColor === 'green'
+                  ? 'bg-green-500'
+                  : a.markerColor === 'orange'
+                    ? 'bg-amber-500'
+                    : 'bg-gray-400';
+              
+              const html = `
+                <div class="relative flex h-10 w-10 items-center justify-center rounded-2xl border-2 border-white shadow-lg ${bgColor} text-white font-bold overflow-hidden transition-transform hover:scale-110 hover:-translate-y-1">
+                  ${
+                    a.avatarUrl
+                      ? `<img src="${a.avatarUrl}" class="h-full w-full object-cover" />`
+                      : `${a.firstName?.[0] || ''}${a.lastName?.[0] || ''}`
+                  }
+                  ${a.isKycVerified ? `<div class="absolute -bottom-1 -right-1 h-3 w-3 bg-blue-500 rounded-full border border-white"></div>` : ''}
                 </div>
-              </Popup>
-            </Marker>
-          ))}
+              `;
+              
+              icon = L.divIcon({
+                html,
+                className: 'custom-leaflet-marker',
+                iconSize: [40, 40],
+                iconAnchor: [20, 40], // Point to the bottom center
+              });
+            }
+
+            return (
+              <Marker
+                key={a.id || a.userId}
+                position={[a.lat, a.lng]}
+                icon={icon}
+                eventHandlers={{ click: () => setSelected(a) }}
+              >
+                <Popup>
+                  <div className="p-1 min-w-[160px]">
+                    <h3 className="font-semibold text-sm">
+                      {a.firstName} {a.lastName}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{a.bio || ''}</p>
+                    <div className="flex items-center gap-2 mt-1.5 text-xs">
+                      <span className="text-amber-500">&#9733; {a.rating}</span>
+                      <span className="text-muted-foreground">({a.totalJobs})</span>
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
         </MapContainer>
       </div>
 

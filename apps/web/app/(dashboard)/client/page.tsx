@@ -108,9 +108,17 @@ export default function ClientDashboard() {
         <StaggerContainer>
           <h2 className="text-lg font-semibold text-foreground mb-4">Missions récentes</h2>
           {missions.length === 0 && !isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Briefcase className="h-10 w-10 mx-auto mb-3 opacity-50" />
-              <p>Aucune mission pour le moment</p>
+            <div className="bento-card text-center py-12 flex flex-col items-center justify-center border-dashed border-2 bg-surface-container/30">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <Briefcase className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-1">Aucune mission publiée</h3>
+              <p className="text-sm text-muted-foreground max-w-sm mb-6">
+                Vous n'avez pas encore publié de mission. Créez votre première mission pour recevoir des devis de nos artisans.
+              </p>
+              <Link href="/client/create">
+                <Button><Plus className="h-4 w-4 mr-1.5" /> Nouvelle mission</Button>
+              </Link>
             </div>
           ) : (
             <div className="space-y-3">

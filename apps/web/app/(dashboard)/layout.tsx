@@ -9,7 +9,7 @@ import { ProtectedRoute } from '../components/auth/protected-route';
 import { useAuthStore } from '../stores/auth.store';
 import {
   LayoutDashboard, Briefcase, FileText, MessageSquare, Users, LogOut,
-  ChevronLeft, Menu, Bell, X, Plus, Shield, CreditCard,
+  ChevronLeft, Menu, Bell, X, Plus, Shield, CreditCard, ShieldCheck,
 } from 'lucide-react';
 
 const clientNav = [
@@ -109,9 +109,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* User */}
             <div className="border-t border-border/50 p-3 space-y-2">
               <div className="flex items-center gap-3 px-3 py-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold text-xs ring-2 ring-primary/10">
-                  {user?.firstName?.[0]}{user?.lastName?.[0]}
-                </div>
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="Avatar" className="h-9 w-9 rounded-xl object-cover ring-2 ring-primary/10" />
+                ) : (
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold text-xs ring-2 ring-primary/10">
+                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                  </div>
+                )}
                 <div className={cn('flex-1 min-w-0 transition-all duration-300', !sidebarOpen && 'lg:opacity-0 lg:w-0 lg:overflow-hidden')}>
                   <p className="text-sm font-medium text-foreground truncate">{user?.firstName} {user?.lastName}</p>
                   <p className="text-xs text-muted-foreground capitalize">{user?.role?.toLowerCase()}</p>
@@ -139,7 +143,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Menu className="h-5 w-5" />
               </button>
               <div className="flex-1" />
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                {isArtisan && (
+                  <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container text-xs font-medium text-muted-foreground">
+                    <ShieldCheck className={cn("h-4 w-4", user?.kycVerifications?.some(k => k.status === 'VERIFIED') ? "text-green-500" : "text-amber-500")} />
+                    {user?.kycVerifications?.some(k => k.status === 'VERIFIED') ? "Vérifié" : "Non vérifié"}
+                  </div>
+                )}
                 <button className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface-container transition-colors">
                   <Bell className="h-5 w-5" />
                   <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-white" />
