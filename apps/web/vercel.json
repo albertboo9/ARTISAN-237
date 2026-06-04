@@ -1,0 +1,7 @@
+{
+  "installCommand": "corepack enable && pnpm install",
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "nodeVersion": "20.x"
+}
