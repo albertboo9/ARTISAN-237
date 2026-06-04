@@ -15,8 +15,7 @@ services:
     plan: free
     runtime: node
     region: frankfurt
-    buildCommand: |
-      cd apps/api && npm install && npx prisma generate && npm run build
+    buildCommand: chmod +x apps/api/render-build.sh && ./apps/api/render-build.sh
     startCommand: |
       cd apps/api && npx prisma db push --accept-data-loss && node dist/src/main.js
     healthCheckPath: /api/v1/test/health
