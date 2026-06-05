@@ -4,34 +4,27 @@
  * Protège les routes selon le rôle utilisateur.
  * Le rôle est déterminé par le backend (JWT), jamais par l'utilisateur.
  * 
- * - Aucun paramètre "role" dans l'URL
- * - Aucun toggle sur la page de login/register
- * - Le backend seul décide du rôle via les credentials
+ * NE fait PAS de redirection depuis /login (le frontend gère ça avec router.push)
+ * NE fait QUE bloquer les accès non autorisés.
  */
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Routes publiques (pas de token requis)
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/', '/search', '/artisans', '/artisan/', '/comment-ca-marche'];
 
-// Routes protégées par rôle
 const ROLE_ROUTES: Record<string, string[]> = {
   '/client': ['CLIENT'],
-  '/artisan/dashboard': ['ARTISAN'],
+  '/artisan': ['ARTISAN'],
   '/admin': ['ADMIN'],
 };
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get('accessToken')?.value || null;
+  const token = request.cookies.get('accessToken')?.value;
 
-  // Routes publiques : laisser passer
-  if (PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(route + '/'))) {
-    // Si l'utilisateur est déjà connecté et va sur login/register, rediriger vers son dashboard
-    if (token && (pathname === '/login' || pathname === '/register')) {
-      return redirectToDashboard(request, token);
-    }
+  // Routes publiques : toujours autorisées
+  if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
@@ -42,80 +35,30 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Vérification RBAC basée sur le rôle encodé dans le token
+  // Vérification RBAC
   for (const [prefix, allowedRoles] of Object.entries(ROLE_ROUTES)) {
     if (pathname.startsWith(prefix)) {
-      return checkRole(request, token, allowedRoles);
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const role = payload?.role;
+
+        if (role && allowedRoles.includes(role)) {
+          return NextResponse.next();
+        }
+
+        // Role non autorisé → rediriger vers login
+        const loginUrl = new URL('/login', request.url);
+        return NextResponse.redirect(loginUrl);
+      } catch {
+        const loginUrl = new URL('/login', request.url);
+        return NextResponse.redirect(loginUrl);
+      }
     }
   }
 
-  // Par défaut, routes protégées sans restriction de rôle spécifique (dashboard générique)
   return NextResponse.next();
 }
 
-function redirectToDashboard(request: NextRequest, token: string): NextResponse {
-  try {
-    // Décoder le payload JWT (sans vérifier la signature — le backend le fait)
-    const payload = decodeJwtPayload(token);
-    const role = payload?.role || 'CLIENT';
-
-    const redirectMap: Record<string, string> = {
-      ADMIN: '/admin',
-      ARTISAN: '/artisan',
-      CLIENT: '/client',
-    };
-
-    const destination = redirectMap[role] || '/client';
-    return NextResponse.redirect(new URL(destination, request.url));
-  } catch {
-    return NextResponse.next(); // Si erreur de décodage, laisser passer vers login
-  }
-}
-
-function checkRole(request: NextRequest, token: string, allowedRoles: string[]): NextResponse {
-  try {
-    const payload = decodeJwtPayload(token);
-    const role = payload?.role;
-
-    if (role && allowedRoles.includes(role)) {
-      return NextResponse.next();
-    }
-
-    // Rôle non autorisé → rediriger vers son propre dashboard
-    return redirectToDashboard(request, token);
-  } catch {
-    // Token invalide → déconnexion
-    const loginUrl = new URL('/login', request.url);
-    return NextResponse.redirect(loginUrl);
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function decodeJwtPayload(token: string): any {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = parts[1];
-    // atob() n'est pas fiable en Edge Runtime Next.js
-    // Utilisation du Buffer de l'Edge Runtime
-    const decoded = new TextDecoder().decode(
-      Uint8Array.from(
-        payload.replace(/-/g, '+').replace(/_/g, '/'),
-        (c) => c.charCodeAt(0)
-      )
-    );
-    return JSON.parse(decoded);
-  } catch {
-    return null;
-  }
-}
-
 export const config = {
-  matcher: [
-    '/client/:path*',
-    '/artisan/:path*',
-    '/admin/:path*',
-    '/login',
-    '/register',
-  ],
+  matcher: ['/client/:path*', '/artisan/:path*', '/admin/:path*'],
 };
