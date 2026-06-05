@@ -7,9 +7,11 @@ import { motion } from "framer-motion";
 import { ShieldCheck, Lock, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 import Button from "../../components/ui/button";
 import { useLogin } from "../../hooks/useAuth";
+import { useToast } from "../../components/ui/Toast";
 
 export default function LoginPage() {
   const router = useRouter();
+  const toast = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -20,19 +22,25 @@ export default function LoginPage() {
     setError("");
     if (!email || !password) {
       setError("Veuillez remplir tous les champs.");
+      toast.error("Veuillez remplir tous les champs.");
       return;
     }
     loginMutation.mutate(
       { email, password },
       {
         onSuccess: (data) => {
+          toast.success(`Bienvenue ${data.user.firstName} !`);
           const role = data.user.role;
           if (role === "ARTISAN") router.push("/artisan");
           else if (role === "ADMIN") router.push("/admin");
           else router.push("/client");
         },
         onError: (err) => {
-          setError(err.message || "Identifiants incorrects.");
+          const msg = err.message === "Invalid credentials" 
+            ? "Email ou mot de passe incorrect." 
+            : err.message || "Une erreur est survenue lors de la connexion.";
+          setError(msg);
+          toast.error(msg);
         },
       }
     );
