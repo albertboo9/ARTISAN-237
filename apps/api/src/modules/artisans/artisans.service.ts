@@ -1,11 +1,12 @@
-import { Injectable, BadRequestException, Logger } from "@nestjs/common";
+import { Injectable, BadRequestException, Logger, HttpException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { UpdateArtisanProfileDto } from "./dto/artisans.dto";
 import { ConfigService } from "@nestjs/config";
 import { HttpService } from "@nestjs/axios";
 import { KycStatus } from "@prisma/client";
-import { firstValueFrom, catchError } from "rxjs";
+import { firstValueFrom, catchError, timeout } from "rxjs";
 import { TrustEngineService } from "./trust-engine.service";
+import { AiGatewayService } from "../ai-gateway/ai-gateway.service";
 
 interface MapQueryParams {
   lat?: number;
@@ -24,6 +25,7 @@ export class ArtisansService {
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
     private readonly trustEngineService: TrustEngineService,
+    private readonly aiGatewayService: AiGatewayService,
   ) {}
 
   // ──────────────────────────────────────────────────
@@ -154,6 +156,100 @@ export class ArtisansService {
 
   private toRad(deg: number): number {
     return deg * (Math.PI / 180);
+  }
+
+  // ──────────────────────────────────────────────────
+  // RECHERCHE INTELLIGENTE (IA)
+  // ──────────────────────────────────────────────────
+
+  /**
+   * Recherche les artisans avec classement par IA.
+   * Récupère les artisans → les envoie au moteur FastAPI → retourne la liste triée.
+   */
+  async searchArtisans(query: { serviceId?: string; repere?: string; lat?: number; lng?: number }) {
+    const { serviceId, lat, lng } = query;
+    const repère = query.repere || "Douala Centre";
+
+    // 1. Récupérer tous les artisans disponibles avec leurs compétences
+    const where: any = { lastLat: { not: null }, lastLng: { not: null }, isAvailable: true };
+    if (serviceId) {
+      where.skills = { some: { serviceId } };
+    }
+
+    const profiles = await this.prisma.artisanProfile.findMany({
+      where,
+      include: {
+        user: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } },
+        skills: { include: { service: { select: { id: true, name: true } } } },
+      },
+      take: 50,
+    });
+
+    if (profiles.length === 0) return { total: 0, artisans: [], ia_used: false };
+
+    // 2. Appeler le moteur IA pour le ranking
+    const iaPayload = {
+      client_request: { description: "", urgency: "medium", quartier_code: repère },
+      available_artisans: profiles.map((p) => ({
+        artisan_id: p.user.id,
+        specialty: p.skills[0]?.service.name || "Général",
+        quartier_base: repère,
+        rating: p.rating,
+        total_jobs: p.totalJobs,
+        avg_response_time_min: p.responseRate || 30,
+        is_premium: false,
+      })),
+    };
+
+    let rankedArtisans: { artisan_id: string; match_probability: number; rank: number }[] = [];
+    let iaUsed = false;
+
+    try {
+      const iaResult = await this.aiGatewayService.getMatches(iaPayload);
+      rankedArtisans = iaResult.recommendations;
+      iaUsed = iaResult.model_version !== "fallback-v1.0";
+    } catch {
+      // Fallback : tri par note
+      rankedArtisans = profiles.map((p, i) => ({
+        artisan_id: p.user.id,
+        match_probability: p.rating / 5,
+        rank: i + 1,
+      }));
+      rankedArtisans.sort((a, b) => b.match_probability - a.match_probability);
+    }
+
+    // 3. Assembler la réponse enrichie
+    const results = rankedArtisans.map((rec) => {
+      const profile = profiles.find((p) => p.user.id === rec.artisan_id);
+      if (!profile) return null;
+      const distance = lat && lng && profile.lastLat && profile.lastLng
+        ? this.haversineDistance(lat, lng, profile.lastLat, profile.lastLng)
+        : null;
+      return {
+        id: profile.user.id,
+        firstName: profile.user.firstName,
+        lastName: profile.user.lastName,
+        avatarUrl: profile.user.avatarUrl,
+        bio: profile.bio,
+        rating: profile.rating,
+        totalJobs: profile.totalJobs,
+        experienceYears: profile.experienceYears,
+        isAvailable: profile.isAvailable,
+        lat: profile.lastLat,
+        lng: profile.lastLng,
+        distance,
+        aiScore: Math.round(rec.match_probability * 100),
+        aiRank: rec.rank,
+        skills: profile.skills.map((s) => ({ serviceId: s.service.id, serviceName: s.service.name })),
+      };
+    }).filter(Boolean);
+
+    return {
+      total: results.length,
+      ia_used: iaUsed,
+      repère,
+      artisans: results.sort((a, b) => a!.aiRank - b!.aiRank),
+    };
   }
 
   // ──────────────────────────────────────────────────

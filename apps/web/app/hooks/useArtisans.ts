@@ -36,21 +36,27 @@ export interface ArtisanResult {
 
 export interface ArtisanSearchParams {
   serviceId?: string;
+  repere?: string;
   lat?: number;
   lng?: number;
-  radius?: number;
-  query?: string;
 }
 
-// ── Recherche d'artisans ───────────────────────────────
+export interface SearchResponse {
+  total: number;
+  ia_used: boolean;
+  repère: string;
+  artisans: ArtisanResult[];
+}
+
+// ── Recherche intelligente avec classement IA ───────────
 export function useSearchArtisans(params: ArtisanSearchParams) {
-  return useQuery<ArtisanResult[]>({
+  return useQuery<SearchResponse>({
     queryKey: ['artisans', 'search', params],
     queryFn: async () => {
-      const { data } = await apiClient.get('/artisans/map', { params });
+      const { data } = await apiClient.get('/artisans/search', { params });
       return data;
     },
-    enabled: !!params.serviceId || !!params.query,
+    enabled: !!params.serviceId || !!params.repere,
     staleTime: 60_000,
   });
 }

@@ -146,6 +146,29 @@ export class ArtisansController {
   }
 
   // ──────────────────────────────────────────────────
+  // PUBLIC : Recherche intelligente avec classement IA
+  // ──────────────────────────────────────────────────
+  @ApiOperation({ summary: "Recherche d'artisans avec classement IA" })
+  @ApiQuery({ name: "serviceId", required: false, type: String })
+  @ApiQuery({ name: "repere", required: false, type: String, description: "Quartier (ex: Ndokoti)" })
+  @ApiQuery({ name: "lat", required: false, type: Number })
+  @ApiQuery({ name: "lng", required: false, type: Number })
+  @Get("search")
+  async searchArtisans(
+    @Query("serviceId") serviceId?: string,
+    @Query("repere") repere?: string,
+    @Query("lat") lat?: string,
+    @Query("lng") lng?: string,
+  ) {
+    return this.artisansService.searchArtisans({
+      serviceId,
+      repere,
+      lat: lat ? parseFloat(lat) : undefined,
+      lng: lng ? parseFloat(lng) : undefined,
+    });
+  }
+
+  // ──────────────────────────────────────────────────
   // WEBHOOK : Didit KYC Callback (public, validé par session_id)
   // ──────────────────────────────────────────────────
   @ApiOperation({ summary: "Didit KYC Webhook — receives verification result" })
