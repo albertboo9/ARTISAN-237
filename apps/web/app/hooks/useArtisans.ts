@@ -6,25 +6,51 @@
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '../lib/api.client';
 
-// ── Types ──────────────────────────────────────────────
-export interface ArtisanResult {
+// ── Types pour la recherche IA ──────────────────────
+export interface ArtisanSearchResult {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  rating: number;
+  totalJobs: number;
+  experienceYears: number;
+  isAvailable: boolean;
+  lat: number | null;
+  lng: number | null;
+  distance: number | null;
+  aiScore: number;
+  aiRank: number;
+  skills: { serviceId: string; serviceName: string }[];
+}
+
+export interface ArtisanSearchParams {
+  serviceId?: string;
+  repere?: string;
+}
+
+export interface SearchResponse {
+  total: number;
+  ia_used: boolean;
+  repère: string;
+  artisans: ArtisanSearchResult[];
+}
+
+// ── Type pour le profil complet ─────────────────────
+export interface ArtisanProfile {
   id: string;
   firstName: string;
   lastName: string;
   avatarUrl: string | null;
   email: string | null;
   phoneNumber: string;
-  artisanProfile: {
-    id: string;
-    bio: string | null;
-    rating: number;
-    totalJobs: number;
-    experienceYears: number;
-    isAvailable: boolean;
-    lastLat: number | null;
-    lastLng: number | null;
-    skills: { service: { name: string } }[];
-  } | null;
+  bio: string | null;
+  rating: number;
+  totalJobs: number;
+  experienceYears: number;
+  isAvailable: boolean;
+  skills: { service: { name: string } }[];
   trustScore?: {
     overall: number;
     verificationScore: number;
@@ -34,21 +60,7 @@ export interface ArtisanResult {
   };
 }
 
-export interface ArtisanSearchParams {
-  serviceId?: string;
-  repere?: string;
-  lat?: number;
-  lng?: number;
-}
-
-export interface SearchResponse {
-  total: number;
-  ia_used: boolean;
-  repère: string;
-  artisans: ArtisanResult[];
-}
-
-// ── Recherche intelligente avec classement IA ───────────
+// ── Recherche intelligente avec classement IA ───────
 export function useSearchArtisans(params: ArtisanSearchParams) {
   return useQuery<SearchResponse>({
     queryKey: ['artisans', 'search', params],
@@ -61,9 +73,9 @@ export function useSearchArtisans(params: ArtisanSearchParams) {
   });
 }
 
-// ── Artisan par ID ─────────────────────────────────────
+// ── Artisan par ID ──────────────────────────────────
 export function useArtisanById(id: string) {
-  return useQuery<ArtisanResult>({
+  return useQuery<ArtisanProfile>({
     queryKey: ['artisans', id],
     queryFn: async () => {
       const { data } = await apiClient.get(`/users/${id}`);
@@ -71,19 +83,5 @@ export function useArtisanById(id: string) {
     },
     enabled: !!id,
     staleTime: 30_000,
-  });
-}
-
-// ── Tous les artisans (Marketplace) ────────────────────
-export function useAllArtisans() {
-  return useQuery<ArtisanResult[]>({
-    queryKey: ['artisans', 'all'],
-    queryFn: async () => {
-      const { data } = await apiClient.get('/users', {
-        params: { role: 'ARTISAN', limit: 50 },
-      });
-      return data;
-    },
-    staleTime: 60_000,
   });
 }

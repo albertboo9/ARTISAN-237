@@ -2,7 +2,6 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { useAllArtisans, useArtisanById } from "../../hooks/useArtisans";
 import { useMe } from "../../hooks/useAuth";
 import {
   TrendingUp, ShieldCheck, Clock, CheckCircle2,
