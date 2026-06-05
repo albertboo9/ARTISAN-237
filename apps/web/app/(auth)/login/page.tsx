@@ -29,8 +29,8 @@ export default function LoginPage() {
       { email, password },
       {
         onSuccess: (data) => {
-          toast.success(`Bienvenue ${data.user.firstName} !`);
-          const role = data.user.role;
+          toast.success(`Connexion réussie !`);
+          const role = data.user?.role;
           if (role === "ARTISAN") router.push("/artisan");
           else if (role === "ADMIN") router.push("/admin");
           else router.push("/client");
