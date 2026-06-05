@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../lib/cn';
 import { ProtectedRoute } from '../components/auth/protected-route';
 import { useAuthStore } from '../stores/auth.store';
+import { useLogout } from '../hooks/useAuth';
 import {
   LayoutDashboard, Briefcase, FileText, MessageSquare, Users, LogOut,
   ChevronLeft, Menu, Bell, X, Plus, Shield, CreditCard, ShieldCheck,
@@ -30,7 +31,8 @@ const artisanNav = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
+  const logoutMutation = useLogout();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -122,7 +124,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </div>
               </div>
               <button
-                onClick={() => { logout(); }}
+                onClick={() => { logoutMutation.mutate(); }}
                 className={cn(
                   'flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors',
                 )}

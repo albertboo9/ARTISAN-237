@@ -285,7 +285,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
-      iat: Date.now(),
+      iat: Math.floor(Date.now() / 1000),
     };
 
     const accessToken = this.jwtService.sign(payload, {

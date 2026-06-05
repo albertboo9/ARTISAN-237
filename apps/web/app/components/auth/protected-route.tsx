@@ -18,22 +18,39 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
   useEffect(() => {
     if (!hasToken) {
       router.replace('/login');
+      return;
     }
-  }, [hasToken, router]);
+    
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/login');
+      return;
+    }
+    
+    if (!isLoading && requiredRole && user && !requiredRole.includes(user.role as any)) {
+      router.replace('/');
+      return;
+    }
+  }, [hasToken, isLoading, isAuthenticated, requiredRole, user, router]);
 
   if (!hasToken) {
     return <LoadingScreen message="Redirection vers la connexion..." />;
   }
 
-  // Still hydrating from persist
   if (isLoading) {
     return <LoadingScreen message="Chargement..." />;
   }
 
-  // User loaded but doesn't have the right role
+  if (!isAuthenticated) {
+    return <LoadingScreen message="Session invalide, redirection..." />;
+  }
+
   if (requiredRole && user && !requiredRole.includes(user.role as any)) {
-    router.replace('/');
-    return null;
+    return <LoadingScreen message="Accès non autorisé..." />;
+  }
+
+  // Si pas de user mais isAuthenticated est true (incohérence), on attend
+  if (!user) {
+    return <LoadingScreen message="Chargement du profil..." />;
   }
 
   return <>{children}</>;

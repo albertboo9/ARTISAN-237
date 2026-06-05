@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagramme de Gantt — ARTISAN-237</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    --green-600: #059669;
+    --green-700: #047857;
+    --emerald-500: #10b981;
+    --indigo-500: #6366f1;
+    --indigo-600: #4f46e5;
+    --sky-600: #0284c7;
+    --violet-600: #7c3aed;
+    --amber-600: #d97706;
+    --rose-600: #dc2626;
+    --teal-600: #0d9488;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--slate-50);
+    color: var(--slate-800);
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Header ── */
+  .gantt-header {
+    background: #fff;
+    border-bottom: 1px solid var(--slate-200);
+    padding: 28px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .gantt-header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--slate-900);
+  }
+  .gantt-header h1 span { color: var(--green-600); font-weight: 700; }
+  .gantt-header .subtitle {
+    font-size: 12px;
+    color: var(--slate-500);
+    margin-top: 2px;
+    font-weight: 400;
+  }
+  .gantt-header .meta {
+    text-align: right;
+    font-size: 12px;
+    color: var(--slate-500);
+    line-height: 1.6;
+  }
+  .gantt-header .meta strong { color: var(--slate-700); font-weight: 600; }
+
+  /* ── Container ── */
+  .gantt-container {
+    max-width: 1120px;
+    margin: 32px auto;
+    padding: 0 24px;
+  }
+
+  /* ── Legend ── */
+  .gantt-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+    margin-bottom: 28px;
+    padding: 14px 20px;
+    background: #fff;
+    border: 1px solid var(--slate-200);
+    border-radius: 6px;
+  }
+  .gantt-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--slate-600);
+  }
+  .gantt-legend-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .gantt-legend-divider {
+    width: 1px;
+    height: 16px;
+    background: var(--slate-200);
+    margin: 0 4px;
+  }
+
+  /* ── Table wrapper ── */
+  .gantt-table-wrap {
+    background: #fff;
+    border: 1px solid var(--slate-200);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+
+  .gantt-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+
+  /* ── Header row ── */
+  .gantt-table thead th {
+    padding: 0;
+    background: var(--slate-50);
+    border-bottom: 1px solid var(--slate-200);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--slate-400);
+    position: sticky;
+    top: 0;
+    z-index: 3;
+  }
+  .gantt-table thead th .th-inner {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .gantt-table thead th.week-col { width: 11%; min-width: 70px; }
+  .gantt-table thead th.task-col { width: 26%; min-width: 180px; text-align: left; }
+  .gantt-table thead th.task-col .th-inner { justify-content: flex-start; }
+  .gantt-table thead th .wk-num {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--slate-700);
+  }
+  .gantt-table thead th .wk-days {
+    font-weight: 400;
+    font-size: 9px;
+  }
+
+  /* ── Body cells ── */
+  .gantt-table tbody td {
+    padding: 0;
+    border-bottom: 1px solid var(--slate-100);
+    vertical-align: middle;
+    height: 38px;
+  }
+  .gantt-table tbody tr:last-child td { border-bottom: none; }
+
+  .gantt-table tbody td.task-cell {
+    padding: 0 12px;
+    font-weight: 500;
+    color: var(--slate-800);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .gantt-table tbody td.phase-cell {
+    padding: 0 8px 0 4px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--slate-400);
+    white-space: nowrap;
+    width: 60px;
+  }
+  .gantt-table tbody td.week-cell {
+    position: relative;
+    padding: 0;
+  }
+
+  /* ── Zebra ── */
+  .gantt-table tbody tr:nth-child(even) td {
+    background: var(--slate-50);
+  }
+
+  /* ── Week grid lines ── */
+  .gantt-table tbody td.week-cell {
+    border-right: 1px solid var(--slate-100);
+  }
+  .gantt-table tbody td.week-cell:last-child { border-right: none; }
+
+  /* ── Bars ── */
+  .gantt-bar {
+    position: absolute;
+    top: 9px;
+    height: 18px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 10px;
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: default;
+    z-index: 2;
+    letter-spacing: 0.01em;
+    transition: opacity 0.15s;
+    min-width: 4px;
+  }
+  .gantt-bar:hover { opacity: 0.85; z-index: 4; }
+
+  /* ── Phase colors ── */
+  .phase-audit .gantt-bar { background: linear-gradient(135deg, #64748b, #475569); }
+  .phase-backend .gantt-bar { background: linear-gradient(135deg, #059669, #047857); }
+  .phase-ia .gantt-bar { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+  .phase-ui .gantt-bar { background: linear-gradient(135deg, #0284c7, #0369a1); }
+  .phase-pages .gantt-bar { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+  .phase-connexion .gantt-bar { background: linear-gradient(135deg, #d97706, #b45309); }
+  .phase-securite .gantt-bar { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+  .phase-tests .gantt-bar { background: linear-gradient(135deg, #0d9488, #0f766e); }
+
+  /* ── Tooltip ── */
+  .gantt-tooltip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--slate-800);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 400;
+    padding: 5px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .gantt-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--slate-800);
+  }
+  .gantt-bar:hover .gantt-tooltip { opacity: 1; }
+
+  /* ── Milestone ── */
+  .gantt-milestone {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--slate-800);
+    border: 2px solid #fff;
+    z-index: 5;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    cursor: default;
+  }
+  .gantt-milestone-label {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--slate-500);
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Row internal spacing ── */
+  .gantt-table tbody tr.section-row td {
+    background: var(--slate-100);
+    border-bottom: 1px solid var(--slate-200);
+    height: 28px;
+  }
+  .gantt-table tbody tr.section-row td.task-cell {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--slate-600);
+    letter-spacing: 0.03em;
+  }
+  .gantt-table tbody tr.section-row td.phase-cell {
+    color: var(--slate-500);
+  }
+
+  /* ── Footer ── */
+  .gantt-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--slate-400);
+    padding: 0 4px;
+  }
+
+  /* ── Print ── */
+  @media print {
+    body { background: #fff; }
+    .gantt-header { border-bottom: 1px solid var(--slate-300); padding: 20px 40px; }
+    .gantt-table-wrap { box-shadow: none; border: 1px solid var(--slate-300); }
+    .gantt-legend { box-shadow: none; border: 1px solid var(--slate-300); }
+    .gantt-bar:hover { opacity: 1; }
+    .gantt-bar .gantt-tooltip { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="gantt-header">
+  <div>
+    <h1><span>ARTISAN</span>237</h1>
+    <div class="subtitle">Planification du developpement — Diagramme de Gantt</div>
+  </div>
+  <div class="meta">
+    <strong>Perimetre :</strong> 8 semaines (56 jours)<br>
+    <strong>Version :</strong> 2.0 — Juin 2026
+  </div>
+</div>
+
+<div class="gantt-container">
+
+  <!-- Legende -->
+  <div class="gantt-legend">
+    <div class="gantt-legend-item"><span class="gantt-legend-swatch" style="background:#64748b;"></span> Audit</div>
+    <div class="gantt-legend-item"><span class="gantt-legend-swatch" style="background:#059669;"></span> Backend</div>
+    <div class="gantt-legend-item"><span class="gantt-legend-swatch" style="background:#6366f1;"></span> IA</div>
+    <div class="gantt-legend-item"><span class="gantt-legend-swatch" style="background:#0284c7;"></span> UI/UX</div>
+    <div class="gantt-legend-item"><span class="gantt-legend-swatch" style="background:#7c3aed;"></span> Pages</div>
+    <div class="gantt-legend-item"><span class="gantt-legend-swatch" style="background:#d97706;"></span> Connexion</div>
+    <div class="gantt-legend-item"><span class="gantt-legend-swatch" style="background:#dc2626;"></span> Securite</div>
+    <div class="gantt-legend-item"><span class="gantt-legend-swatch" style="background:#0d9488;"></span> Tests</div>
+    <div class="gantt-legend-divider"></div>
+    <div class="gantt-legend-item">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--slate-800);border:2px solid #fff;box-shadow:0 0 0 1px var(--slate-300);"></span>
+      Jalon
+    </div>
+  </div>
+
+  <!-- Diagramme -->
+  <div class="gantt-table-wrap">
+    <table class="gantt-table" id="gantt">
+      <thead>
+        <tr>
+          <th class="task-col"><div class="th-inner">Tache</div></th>
+          <th style="width:50px;min-width:50px;"><div class="th-inner">Phase</div></th>
+          <th class="week-col"><div class="th-inner"><span class="wk-num">S1</span></div></th>
+          <th class="week-col"><div class="th-inner"><span class="wk-num">S2</span></div></th>
+          <th class="week-col"><div class="th-inner"><span class="wk-num">S3</span></div></th>
+          <th class="week-col"><div class="th-inner"><span class="wk-num">S4</span></div></th>
+          <th class="week-col"><div class="th-inner"><span class="wk-num">S5</span></div></th>
+          <th class="week-col"><div class="th-inner"><span class="wk-num">S6</span></div></th>
+          <th class="week-col"><div class="th-inner"><span class="wk-num">S7</span></div></th>
+          <th class="week-col"><div class="th-inner"><span class="wk-num">S8</span></div></th>
+        </tr>
+      </thead>
+      <tbody id="ganttBody"></tbody>
+    </table>
+  </div>
+
+  <div class="gantt-footer">
+    <span>ARTISAN-237 — Projet academique</span>
+    <span>Edite le 5 Juin 2026</span>
+  </div>
+
+</div>
+
+<script>
+  (function() {
+    const TOTAL = 8;
+
+    const data = [
+      // Section : S1
+      { task: 'Audit technique du depot', phase: 'Audit', s: 0.0, e: 1.3, cls: 'phase-audit' },
+      { task: 'Vision produit cible', phase: 'Audit', s: 0.7, e: 2.0, cls: 'phase-audit' },
+      { task: 'Blueprint execution', phase: 'Audit', s: 1.5, e: 2.8, cls: 'phase-audit' },
+      { task: 'Corrections architecturales', phase: 'Audit', s: 2.3, e: 3.5, cls: 'phase-audit' },
+
+      // Section : S2
+      { task: 'Docker PostgreSQL + Prisma', phase: 'Backend', s: 3.0, e: 4.2, cls: 'phase-backend' },
+      { task: 'Trust Engine V2 (4 scores)', phase: 'Backend', s: 3.5, e: 5.0, cls: 'phase-backend' },
+      { task: 'Gateway IA + fallback', phase: 'Backend', s: 4.0, e: 5.5, cls: 'phase-backend' },
+      { task: 'Seed base de donnees', phase: 'Backend', s: 4.8, e: 5.8, cls: 'phase-backend' },
+
+      // Section : S3
+      { task: 'Specification IA (AI_ENGINE_SPEC)', phase: 'IA', s: 5.2, e: 6.5, cls: 'phase-ia' },
+      { task: 'Script training + Random Forest', phase: 'IA', s: 6.0, e: 7.5, cls: 'phase-ia' },
+      { task: 'FastAPI (predict/recommend/explain)', phase: 'IA', s: 6.8, e: 8.2, cls: 'phase-ia' },
+      { task: 'Tests pytest (7 tests)', phase: 'IA', s: 7.5, e: 8.8, cls: 'phase-ia' },
+
+      // Section : S4
+      { task: 'Design system + palette Tailwind', phase: 'UI/UX', s: 5.5, e: 7.0, cls: 'phase-ui' },
+      { task: 'Composants (AIBadge, ArtisanCard...)', phase: 'UI/UX', s: 6.5, e: 8.0, cls: 'phase-ui' },
+      { task: 'Homepage premium + Login 50/50', phase: 'UI/UX', s: 7.2, e: 9.0, cls: 'phase-ui' },
+      { task: 'Loading premium + animations', phase: 'UI/UX', s: 8.0, e: 9.5, cls: 'phase-ui' },
+
+      // Section : S5
+      { task: 'Dashboard Artisan (cockpit)', phase: 'Pages', s: 8.5, e: 10.2, cls: 'phase-pages' },
+      { task: 'Dashboard Client (KPI + Escrow)', phase: 'Pages', s: 9.5, e: 11.0, cls: 'phase-pages' },
+      { task: 'Page Search + carte Leaflet', phase: 'Pages', s: 10.0, e: 11.8, cls: 'phase-pages' },
+      { task: 'Profil Artisan + Register securise', phase: 'Pages', s: 10.8, e: 12.5, cls: 'phase-pages' },
+
+      // Section : S6
+      { task: 'Hooks TanStack (useAuth, useArtisans)', phase: 'Connexion', s: 11.5, e: 13.0, cls: 'phase-connexion' },
+      { task: 'API Client Axios + intercepteurs', phase: 'Connexion', s: 12.0, e: 13.5, cls: 'phase-connexion' },
+      { task: 'Connexion login API', phase: 'Connexion', s: 12.8, e: 14.2, cls: 'phase-connexion' },
+      { task: 'Connexion recherche IA', phase: 'Connexion', s: 13.5, e: 15.0, cls: 'phase-connexion' },
+
+      // Section : S7
+      { task: 'Middleware RBAC Next.js', phase: 'Securite', s: 14.0, e: 15.2, cls: 'phase-securite' },
+      { task: 'Toast system + gestion erreurs', phase: 'Securite', s: 14.5, e: 16.0, cls: 'phase-securite' },
+      { task: 'Correction boucle redirection', phase: 'Securite', s: 15.5, e: 16.8, cls: 'phase-securite' },
+      { task: 'Correction token JWT + cookie', phase: 'Securite', s: 16.2, e: 17.5, cls: 'phase-securite' },
+
+      // Section : S8
+      { task: 'Tests ML (pytest — 7/7 verts)', phase: 'Tests', s: 16.8, e: 17.8, cls: 'phase-tests' },
+      { task: 'Build final frontend + backend', phase: 'Tests', s: 17.2, e: 18.2, cls: 'phase-tests' },
+      { task: 'Rapport de soutenance', phase: 'Tests', s: 17.8, e: 18.8, cls: 'phase-tests' },
+      { task: 'Diagramme de Gantt', phase: 'Tests', s: 18.2, e: 19.0, cls: 'phase-tests' },
+    ];
+
+    const milestones = [
+      { pos: 3.5, label: 'Audit valide' },
+      { pos: 5.8, label: 'Backend operationnel' },
+      { pos: 8.8, label: 'IA operationnelle' },
+      { pos: 12.5, label: 'UI/UX finalisee' },
+      { pos: 17.5, label: 'Plateforme stable' },
+      { pos: 19.0, label: 'Soutenance' },
+    ];
+
+    const body = document.getElementById('ganttBody');
+
+    // Fonction de rendu d'une barre dans une cellule
+    function renderBar(td, t, weekIndex) {
+      const start = t.s;
+      const end = t.e;
+      // Si la tâche n'est pas dans cette semaine
+      if (end <= weekIndex || start >= weekIndex + 1) return;
+
+      const bar = document.createElement('div');
+      bar.className = 'gantt-bar';
+
+      // Calcul position et largeur relatives à la semaine
+      const cellStart = Math.max(start, weekIndex);
+      const cellEnd = Math.min(end, weekIndex + 1);
+      const left = ((cellStart - weekIndex) / 1) * 100;
+      const width = ((cellEnd - cellStart) / 1) * 100;
+
+      bar.style.left = left + '%';
+      bar.style.width = Math.max(width, 2) + '%';
+
+      // N'afficher le texte que si la barre est assez large
+      if (width > 25) {
+        bar.textContent = t.task;
+      }
+
+      // Tooltip
+      const tip = document.createElement('div');
+      tip.className = 'gantt-tooltip';
+      tip.textContent = t.task + ' (Semaine ' + (Math.floor(t.s)+1) + '-' + (Math.ceil(t.e)) + ')';
+      bar.appendChild(tip);
+
+      td.appendChild(bar);
+    }
+
+    // Génération des lignes
+    data.forEach(function(t) {
+      var tr = document.createElement('tr');
+      tr.className = t.cls || '';
+
+      // Cellule tâche
+      var tdTask = document.createElement('td');
+      tdTask.className = 'task-cell';
+      tdTask.textContent = t.task;
+      tr.appendChild(tdTask);
+
+      // Cellule phase
+      var tdPhase = document.createElement('td');
+      tdPhase.className = 'phase-cell';
+      tdPhase.textContent = t.phase;
+      tr.appendChild(tdPhase);
+
+      // 8 cellules semaines
+      for (var w = 0; w < TOTAL; w++) {
+        var td = document.createElement('td');
+        td.className = 'week-cell';
+        renderBar(td, t, w);
+        tr.appendChild(td);
+      }
+
+      body.appendChild(tr);
+    });
+
+    // Ligne des jalons
+    var msTr = document.createElement('tr');
+    var msTdTask = document.createElement('td');
+    msTdTask.className = 'task-cell';
+    msTdTask.style.fontWeight = '600';
+    msTdTask.style.fontSize = '11px';
+    msTdTask.style.color = 'var(--slate-500)';
+    msTdTask.textContent = 'Jalons';
+    msTr.appendChild(msTdTask);
+
+    var msTdPhase = document.createElement('td');
+    msTdPhase.className = 'phase-cell';
+    msTdPhase.textContent = '—';
+    msTr.appendChild(msTdPhase);
+
+    for (var w = 0; w < TOTAL; w++) {
+      var td = document.createElement('td');
+      td.className = 'week-cell';
+      td.style.position = 'relative';
+
+      milestones.forEach(function(m) {
+        // Si le jalon est dans cette semaine
+        if (m.pos >= w && m.pos < w + 1) {
+          var pct = ((m.pos - w) / 1) * 100;
+
+          var dot = document.createElement('div');
+          dot.className = 'gantt-milestone';
+          dot.style.left = pct + '%';
+
+          var lbl = document.createElement('div');
+          lbl.className = 'gantt-milestone-label';
+          lbl.textContent = m.label;
+          dot.appendChild(lbl);
+
+          td.appendChild(dot);
+        }
+      });
+
+      msTr.appendChild(td);
+    }
+    body.appendChild(msTr);
+
+  })();
+</script>
+
+</body>
+</html>

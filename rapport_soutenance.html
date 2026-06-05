@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARTISAN-237 — Rapport Technique de Soutenance</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  :root {
+    --primary: #006c49;
+    --primary-hover: #005236;
+    --primary-light: #e8f5f0;
+    --ai: #6366f1;
+    --ai-light: #eef0ff;
+    --bg: #fafafa;
+    --card: #ffffff;
+    --surface: #f4f6fa;
+    --border: #e2e4e9;
+    --text: #1a1a2e;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.6;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Cover Page */
+  .cover {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    text-align: center;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, #006c49 0%, #005236 40%, #6366f1 100%);
+    color: white;
+    page-break-after: always;
+  }
+  .cover .logo {
+    font-size: 4rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+  }
+  .cover .logo span { color: rgba(255,255,255,0.6); }
+  .cover h1 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    max-width: 700px;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+  }
+  .cover p { font-size: 1.2rem; opacity: 0.85; max-width: 500px; margin-bottom: 2rem; }
+  .cover .meta {
+    display: flex;
+    gap: 2rem;
+    font-size: 0.95rem;
+    opacity: 0.7;
+    margin-top: 2rem;
+  }
+  .cover .badge {
+    display: inline-block;
+    padding: 0.4rem 1.2rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.3);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-top: 1.5rem;
+  }
+
+  /* Content */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  /* Table of Contents */
+  .toc {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 2rem 2.5rem;
+    margin-bottom: 3rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    page-break-after: always;
+  }
+  .toc h2 { font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--primary); }
+  .toc ol { list-style: none; counter-reset: toc-counter; }
+  .toc ol li { counter-increment: toc-counter; margin-bottom: 0.6rem; }
+  .toc ol li::before {
+    content: counter(toc-counter);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-right: 0.8rem;
+  }
+  .toc ol li a { color: var(--text); text-decoration: none; font-weight: 500; }
+  .toc ol li a:hover { color: var(--primary); }
+  .toc ol li span { font-size: 0.85rem; color: var(--text-muted); margin-left: 0.5rem; }
+
+  /* Sections */
+  .section {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    page-break-inside: avoid;
+  }
+  .section h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 3px solid var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .section h2 .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--primary);
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+  .section h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.8rem;
+    color: var(--text);
+  }
+  .section h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 1rem 0 0.5rem;
+  }
+  .section p { margin-bottom: 0.8rem; color: var(--text-secondary); }
+  .section ul, .section ol { margin: 0.5rem 0 1rem 1.5rem; color: var(--text-secondary); }
+  .section li { margin-bottom: 0.3rem; }
+
+  /* Cards / Grids */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+
+  .stat-card {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 1.2rem;
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .stat-card .value { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+  .stat-card .label { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem; }
+  .stat-card.ai .value { color: var(--ai); }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  table th {
+    background: var(--surface);
+    padding: 0.7rem 0.8rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border);
+  }
+  table td {
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+  table tr:hover td { background: var(--surface); }
+  table .badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .badge-green { background: #d4edda; color: #155724; }
+  .badge-yellow { background: #fff3cd; color: #856404; }
+  .badge-red { background: #f8d7da; color: #721c24; }
+  .badge-gray { background: #e2e3e5; color: #383d41; }
+  .badge-blue { background: var(--ai-light); color: var(--ai); }
+
+  /* Code */
+  code {
+    background: var(--surface);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  pre {
+    background: #1a1a2e;
+    color: #e4e4e7;
+    padding: 1.2rem;
+    border-radius: 10px;
+    overflow-x: auto;
+    font-size: 0.8rem;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    line-height: 1.5;
+    margin: 1rem 0;
+  }
+  pre .comment { color: #6b7280; }
+  pre .key { color: #93c5fd; }
+  pre .string { color: #86efac; }
+  pre .number { color: #fde68a; }
+
+  /* Architecture Diagram */
+  .arch-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1.5rem;
+    background: var(--surface);
+    border-radius: 12px;
+    margin: 1rem 0;
+    font-size: 0.85rem;
+  }
+  .arch-layer {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .arch-box {
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    font-weight: 500;
+    font-size: 0.8rem;
+  }
+  .arch-box.primary { background: var(--primary); color: white; border: none; }
+  .arch-box.ai { background: var(--ai); color: white; border: none; }
+  .arch-box.outline { border: 1px dashed var(--border); }
+  .arch-arrow { color: var(--text-muted); font-size: 1.2rem; }
+
+  /* Print */
+  @media print {
+    body { background: white; }
+    .cover { min-height: 100vh; }
+    .section { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+    .grid-2, .grid-3, .grid-4 { page-break-inside: avoid; }
+    .stat-card { border: 1px solid #ddd; }
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; }
+  }
+
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .cover h1 { font-size: 2rem; }
+  }
+
+  .page-break { page-break-before: always; }
+  .progress-bar { height: 8px; background: var(--surface); border-radius: 999px; overflow: hidden; margin: 0.5rem 0; }
+  .progress-bar .fill { height: 100%; border-radius: 999px; }
+  .fill-green { background: var(--primary); }
+  .fill-blue { background: var(--ai); }
+  .fill-yellow { background: #f59e0b; }
+  .fill-gray { background: #9ca3af; }
+</style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- COVER PAGE -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="cover">
+    <div class="logo">ARTISAN<span>237</span></div>
+    <h1>Plateforme Intelligente de Confiance<br>et de Recommandation d'Artisans</h1>
+    <p>Rapport Technique de Soutenance — Architecture, Développement & Innovation</p>
+    <div class="badge">MVP — Version 2.0</div>
+    <div class="meta">
+      <span>📅 Juin 2026</span>
+      <span>📍 Douala, Cameroun</span>
+      <span>⚡ Projet Académique</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- TABLE OF CONTENTS -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div class="container">
+    <div class="toc">
+      <h2>📑 Table des Matières</h2>
+      <ol>
+        <li><a href="#s1">Contexte & Problématique</a> <span>— Le marché de l'artisanat à Douala</span></li>
+        <li><a href="#s2">Vision Produit & Proposition de Valeur</a> <span>— Confiance, IA, Escrow</span></li>
+        <li><a href="#s3">Architecture Générale</a> <span>— Monorepo, Microservices, Flux de données</span></li>
+        <li><a href="#s4">Backend NestJS</a> <span>— Modules, API, Sécurité, Base de données</span></li>
+        <li><a href="#s5">Moteur IA (FastAPI + Random Forest)</a> <span>— Dataset, Modèle, Endpoints</span></li>
+        <li><a href="#s6">Frontend Next.js</a> <span>— 26 pages, Design System Premium, Animations</span></li>
+        <li><a href="#s7">Trust Engine</a> <span>— Les 4 scores de confiance</span></li>
+        <li><a href="#s8">Sécurité & Authentification</a> <span>— JWT, RBAC, Rate Limiting</span></li>
+        <li><a href="#s9">Infrastructure & DevOps</a> <span>— Docker, CI/CD, Déploiement</span></li>
+        <li><a href="#s10">État d'Avancement & Dette Technique</a> <span>— Tableaux, Pourcentages</span></li>
+        <li><a href="#s11">Plan de Soutenance</a> <span>— Scénario de démonstration</span></li>
+      </ol>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION 1 : CONTEXTE -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="section" id="s1">
+      <h2><span class="num">1</span> Contexte & Problématique</h2>
+      
+      <h3>Le Problème</h3>
+      <p>À Douala, comme dans la plupart des grandes villes camerounaises, trouver un artisan compétent et fiable est un parcours semé d'embûches. Les particuliers utilisent principalement Facebook, WhatsApp ou le bouche-à-oreille, méthodes qui exposent à trois risques majeurs :</p>
+      <ul>
+        <li><strong>L'escroquerie financière</strong> : avance non remboursée, travaux non réalisés</li>
+        <li><strong>L'incompétence technique</strong> : absence de qualification vérifiable</li>
+        <li><strong>Le manque de réactivité</strong> : artisans injoignables, délais non respectés</li>
+      </ul>
+
+      <h3>La Solution : ARTISAN-237</h3>
+      <p>ARTISAN-237 est une plateforme numérique qui met en relation les particuliers et les artisans qualifiés à Douala. Elle repose sur trois piliers fondamentaux :</p>
+      
+      <div class="grid-3">
+        <div class="stat-card">
+          <div class="value">🔒</div>
+          <div class="label" style="font-weight:600;margin-top:0.5rem;">Escrow Stripe</div>
+          <div class="label">Paiement séquestré jusqu'à validation des travaux</div>
+        </div>
+        <div class="stat-card ai">
+          <div class="value" style="color:var(--ai)">🤖</div>
+          <div class="label" style="font-weight:600;margin-top:0.5rem;color:var(--ai);">IA Random Forest</div>
+          <div class="label">Recommandation intelligente des artisans</div>
+        </div>
+        <div class="stat-card">
+          <div class="value">🛡️</div>
+          <div class="label" style="font-weight:600;margin-top:0.5rem;">KYC Didit</div>
+          <div class="label">Vérification d'identité obligatoire</div>
+        </div>
+      </div>
+
+      <h3>Objectifs Académiques</h3>
+      <p>Ce projet a été conçu pour démontrer :</p>
+      <ul>
+        <li>Une maîtrise des architectures logicielles modernes (Monorepo, Microservices)</li>
+        <li>Une utilisation pertinente de l'IA (Random Forest pour la recommandation)</li>
+        <li>Une intégration de systèmes de paiement sécurisés (Stripe Escrow)</li>
+        <li>Une application Mobile First optimisée pour les réseaux 3G/4G</li>
+        <li>Une plateforme crédible, prête pour une mise en production réelle</li>
+      </ul>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION 2 : VISION PRODUIT -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="section page-break" id="s2">
+      <h2><span class="num">2</span> Vision Produit & Proposition de Valeur</h2>
+
+      <h3>Positionnement</h3>
+      <p>ARTISAN-237 n'est <strong>pas</strong> un simple annuaire d'artisans ni un clone de PagesJaunes ou Jumia. C'est une <strong>plateforme intelligente de confiance</strong> qui sécurise et accélère la mise en relation.</p>
+
+      <div class="grid-2">
+        <div class="stat-card" style="text-align:left;">
+          <h4 style="color:var(--primary);margin-bottom:0.5rem;">Promesse Client</h4>
+          <p style="font-size:0.9rem;">"Trouvez l'artisan idéal en 2 minutes, payez en toute sécurité, soyez satisfait ou remboursé."</p>
+        </div>
+        <div class="stat-card" style="text-align:left;">
+          <h4 style="color:var(--ai);margin-bottom:0.5rem;">Promesse Artisan</h4>
+          <p style="font-size:0.9rem;">"Recevez des chantiers qualifiés près de chez vous, bâtissez votre réputation, soyez payé à coup sûr."</p>
+        </div>
+      </div>
+
+      <h3>Différenciation</h3>
+      <table>
+        <tr><th>Critère</th><th>Facebook / WhatsApp</th><th>ARTISAN-237</th></tr>
+        <tr><td>Confiance</td><td>❌ Aucune vérification</td><td>✅ KYC Didit + Trust Score</td></tr>
+        <tr><td>Paiement</td><td>❌ Acompte risqué</td><td>✅ Escrow Stripe</td></tr>
+        <tr><td>Recherche</td><td>❌ Manuelle, aléatoire</td><td>✅ IA Random Forest (score 0-100)</td></tr>
+        <tr><td>Réactivité</td><td>❌ Dépend de l'artisan</td><td>✅ Score de réactivité visible</td></tr>
+        <tr><td>Traçabilité</td><td>❌ Aucune</td><td>✅ Avis certifiés + Historique</td></tr>
+      </table>
+
+      <h3>Changement de Paradigme</h3>
+      <p>Le projet a été repensé pour passer de :</p>
+      <p style="text-align:center;font-size:1.1rem;margin:1rem 0;">
+        ❌ <em>"Une marketplace avec un chatbot"</em>
+      </p>
+      <p style="text-align:center;font-size:1.1rem;margin:1rem 0;font-weight:600;color:var(--primary);">
+        ✅ <em>"Une plateforme intelligente de confiance et de recommandation d'artisans"</em>
+      </p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION 3 : ARCHITECTURE -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="section page-break" id="s3">
+      <h2><span class="num">3</span> Architecture Générale</h2>
+
+      <h3>Diagramme d'Architecture</h3>
+      <div class="arch-diagram">
+        <div class="arch-layer">
+          <div class="arch-box primary">Next.js 15<br><small style="opacity:0.7">Frontend / SSR</small></div>
+          <div class="arch-box" style="font-size:2rem;padding:0 0.5rem;border:none;background:transparent;">⬅️➡️</div>
+          <div class="arch-box primary">NestJS 10<br><small style="opacity:0.7">API Gateway</small></div>
+          <div class="arch-box" style="font-size:2rem;padding:0 0.5rem;border:none;background:transparent;">⬅️➡️</div>
+          <div class="arch-box ai">FastAPI<br><small style="opacity:0.7">Microservice IA</small></div>
+        </div>
+        <div class="arch-layer">
+          <div class="arch-box" style="background:#e8f5e9;">PostgreSQL 15</div>
+          <div class="arch-box" style="background:#fce4ec;">Redis 7</div>
+          <div class="arch-box" style="background:#e3f2fd;">MinIO (S3)</div>
+          <div class="arch-box outline">Stripe</div>
+          <div class="arch-box outline">Didit KYC</div>
+        </div>
+      </div>
+
+      <h3>Flux de Données Principal</h3>
+      <pre>
+<span class="comment">// Parcours Client → Recherche → IA → Résultat</span>
+
+<span class="number">1.</span> Utilisateur saisit <span class="string">"Plombier à Ndokoti"</span> dans la barre de recherche
+<span class="number">2.</span> Next.js appelle GET /api/v1/artisans/search?serviceId=...&repere=Ndokoti
+<span class="number">3.</span> NestJS interroge PostgreSQL pour récupérer les artisans disponibles
+<span class="number">4.</span> NestJS envoie les profils à FastAPI : <span class="key">POST</span> /recommend
+<span class="number">5.</span> FastAPI charge le modèle Random Forest (model.pkl) et calcule les scores
+<span class="number">6.</span> FastAPI retourne la liste triée par score décroissant
+<span class="number">7.</span> NestJS assemble la réponse avec les données Prisma
+<span class="number">8.</span> Next.js affiche les ArtisanCard avec leurs badges IA
+</pre>
+
+      <h3>Stack Technologique Complète</h3>
+      <div class="grid-4">
+        <div class="stat-card"><div class="value" style="font-size:1.2rem;">Next.js 15</div><div class="label">React / SSR / PWA</div></div>
+        <div class="stat-card"><div class="value" style="font-size:1.2rem;">NestJS 10</div><div class="label">Node.js / Express</div></div>
+        <div class="stat-card ai"><div class="value" style="font-size:1.2rem;">FastAPI</div><div class="label">Python 3.11</div></div>
+        <div class="stat-card"><div class="value" style="font-size:1.2rem;">Prisma 5</div><div class="label">ORM PostgreSQL</div></div>
+        <div class="stat-card"><div class="value" style="font-size:1.2rem;">Tailwind 4</div><div class="label">CSS Utility-first</div></div>
+        <div class="stat-card ai"><div class="value" style="font-size:1.2rem;">scikit-learn</div><div class="label">Random Forest</div></div>
+        <div class="stat-card"><div class="value" style="font-size:1.2rem;">TanStack Query</div><div class="label">État serveur</div></div>
+        <div class="stat-card"><div class="value" style="font-size:1.2rem;">Socket.io</div><div class="label">WebSocket</div></div>
+      </div>
+
+      <h3>Structure du Monorepo</h3>
+      <pre>
+ARTISAN-237/
+├── apps/
+│   ├── api/              <span class="comment">// Backend NestJS (14 modules)</span>
+│   ├── web/              <span class="comment">// Frontend Next.js (26 pages)</span>
+│   └── ml-service/       <span class="comment">// Microservice IA FastAPI</span>
+├── packages/             <span class="comment">// Types, UI, Config partagés</span>
+├── docker/               <span class="comment">// Scripts DB + maintenance</span>
+├── docs/                 <span class="comment">// Documentation technique</span>
+├── docker-compose.yml    <span class="comment">// 5 services (PostgreSQL, Redis, NestJS, Next.js, FastAPI, MinIO)</span>
+└── turbo.json            <span class="comment">// Configuration Turborepo</span>
+</pre>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION 4 : BACKEND -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="section page-break" id="s4">
+      <h2><span class="num">4</span> Backend NestJS</h2>
+
+      <h3>Architecture Modulaire</h3>
+      <p>Le backend est organisé en <strong>14 modules</strong> indépendants, chacun responsable d'un domaine métier spécifique :</p>
+      
+      <div class="grid-2">
+        <div>
+          <h4>Modules Métier</h4>
+          <ul>
+            <li><strong>AuthModule</strong> — JWT, login, register, refresh, RBAC</li>
+            <li><strong>UsersModule</strong> — Profils utilisateurs (CLIENT, ARTISAN, ADMIN)</li>
+            <li><strong>ArtisansModule</strong> — Profils artisans, KYC, Trust Engine, géolocalisation</li>
+            <li><strong>JobsModule</strong> — Missions, statuts, Smart Job Builder</li>
+            <li><strong>QuotesModule</strong> — Devis, acceptation/rejet</li>
+            <li><strong>FinancialModule</strong> — Stripe, Escrow, webhooks</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Modules Transverses</h4>
+          <ul>
+            <li><strong>ChatModule</strong> — WebSocket Socket.io</li>
+            <li><strong>NotificationsModule</strong> — Push Firebase + email SMTP</li>
+            <li><strong>ReviewsModule</strong> — Avis post-travaux</li>
+            <li><strong>DisputesModule</strong> — Litiges clients/artisans</li>
+            <li><strong>TaxonomiesModule</strong> — Catégories et services</li>
+            <li><strong>AiGatewayModule</strong> — Passerelle vers FastAPI</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Authentification & Sécurité</h3>
+      <table>
+        <tr><th>Mécanisme</th><th>Détail</th><th>Statut</th></tr>
+        <tr><td>JWT Access Token</td><td>15 min, stocké en localStorage</td><td><span class="badge badge-green">✅</span></td></tr>
+        <tr><td>Refresh Token</td><td>7 jours, cookie httpOnly</td><td><span class="badge badge-green">✅</span></td></tr>
+        <tr><td>RBAC</td><td>3 rôles : CLIENT, ARTISAN, ADMIN</td><td><span class="badge badge-green">✅</span></td></tr>
+        <tr><td>Rate Limiting</td><td>5 tentatives / 15 min par email</td><td><span class="badge badge-green">✅</span></td></tr>
+        <tr><td>Protection des routes</td><td>JwtAuthGuard + RolesGuard</td><td><span class="badge badge-green">✅</span></td></tr>
+      </table>
+
+      <h3>Base de Données — Modèle Prisma</h3>
+      <p>15 modèles interconnectés — Schéma complet dans <code>apps/api/prisma/schema.prisma</code></p>
+      <pre>
+<span class="key">User</span> ─── <span class="key">ArtisanProfile</span> ─── <span class="key">ArtisanSkill</span> ─── <span class="key">Service</span> ─── <span class="key">Category</span>
+  │               │
+  ├── <span class="key">KycVerification</span>    ├── <span class="key">Review</span> (as artisan)
+  ├── <span class="key">Notification</span>       └── <span class="key">Quote</span>
+  │
+  └── <span class="key">Job</span> ─── <span class="key">Quote</span> ─── <span class="key">EscrowAccount</span>
+        ├── <span class="key">Message</span>
+        ├── <span class="key">Dispute</span>
+        ├── <span class="key">Invoice</span>
+        └── <span class="key">JobMedia</span>
+</pre>
+
+      <h3>API — Chiffres Clés</h3>
+      <div class="grid-3">
+        <div class="stat-card"><div class="value">30+</div><div class="label">Endpoints REST</div></div>
+        <div class="stat-card"><div class="value">14</div><div class="label">Modules NestJS</div></div>
+        <div class="stat-card"><div class="value">3</div><div class="label">Rôles utilisateurs</div></div>
+      </div>
+
+      <p>Documentation Swagger disponible à l'adresse <code>http://localhost:3001/api/docs</code></p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION 5 : IA -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="section page-break" id="s5">
+      <h2><span class="num">5</span> Moteur IA — FastAPI + Random Forest</h2>
+
+      <h3>Pipeline d'Entraînement</h3>
+      <pre>
+<span class="comment">// Script : apps/ml-service/train_model.py</span>
+
+<span class="number">1.</span> Chargement du dataset  <span class="comment">// artisan237_big_dataset.csv (15 000 lignes)</span>
+<span class="number">2.</span> Feature Engineering     <span class="comment">// LabelEncoder (metier, repere_client, repere_artisan)</span>
+<span class="number">3.</span> Train/Test Split        <span class="comment">// 80% train (12 000) / 20% test (3 000)</span>
+<span class="number">4.</span> RandomForestRegressor   <span class="comment">// n_estimators=150, max_depth=20, min_samples_split=4</span>
+<span class="number">5.</span> Évaluation              <span class="comment">// R² = 0.7926, RMSE = 5.40, MAE = 4.32</span>
+<span class="number">6.</span> Export artefacts         <span class="comment">// model.pkl + label_encoder_metier.pkl + metrics JSON</span>
+</pre>
+
+      <h3>Importance des Variables</h3>
+      <div style="margin:1rem 0;">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;">
+          <span style="width:120px;font-size:0.85rem;">note_moyenne</span>
+          <div class="progress-bar" style="flex:1;"><div class="fill fill-green" style="width:59.74%;"></div></div>
+          <span style="font-size:0.8rem;font-weight:600;width:50px;">59.7%</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;">
+          <span style="width:120px;font-size:0.85rem;">xp_point</span>
+          <div class="progress-bar" style="flex:1;"><div class="fill fill-blue" style="width:15.8%;"></div></div>
+          <span style="font-size:0.8rem;font-weight:600;width:50px;">15.8%</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;">
+          <span style="width:120px;font-size:0.85rem;">temps_réponse</span>
+          <div class="progress-bar" style="flex:1;"><div class="fill fill-yellow" style="width:8.22%;"></div></div>
+          <span style="font-size:0.8rem;font-weight:600;width:50px;">8.2%</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;">
+          <span style="width:120px;font-size:0.85rem;">autres (5 vars)</span>
+          <div class="progress-bar" style="flex:1;"><div class="fill fill-gray" style="width:16.26%;"></div></div>
+          <span style="font-size:0.8rem;font-weight:600;width:50px;">16.3%</span>
+        </div>
+      </div>
+
+      <h3>Endpoints FastAPI</h3>
+      <table>
+        <tr><th>Méthode</th><th>Route</th><th>Description</th><th>Tests</th></tr>
+        <tr><td><code>GET</code></td><td><code>/</code></td><td>Diagnostic : status, model_loaded, métiers/reperes</td><td><span class="badge badge-green">✅</span></td></tr>
+        <tr><td><code>GET</code></td><td><code>/health</code></td><td>Health check Docker</td><td><span class="badge badge-green">✅</span></td></tr>
+        <tr><td><code>POST</code></td><td><code>/predict</code></td><td>Score unitaire (1 client ↔ 1 artisan)</td><td><span class="badge badge-green">✅</span></td></tr>
+        <tr><td><code>POST</code></td><td><code>/recommend</code></td><td>Recommandation batch (classement IA)</td><td><span class="badge badge-green">✅</span></td></tr>
+        <tr><td><code>POST</code></td><td><code>/explain</code></td><td>Explicabilité XAI (texte naturel)</td><td><span class="badge badge-green">✅</span></td></tr>
+      </table>
+      <p><em>7 tests pytest — 100% verts</em></p>
+
+      <h3>Intégration NestJS ↔ FastAPI</h3>
+      <p>L'AiGatewayService (fichier <code>ai-gateway.service.ts</code>) fait office de proxy :</p>
+      <ul>
+        <li>NestJS transforme les données Prisma au format attendu par FastAPI</li>
+        <li>FastAPI retourne les scores via <code>POST /recommend</code></li>
+        <li>Timeout : 1000 ms</li>
+        <li>Fallback : tri par note moyenne + proximité géographique si indisponible</li>
+      </ul>
+
+      <h3>Explicabilité XAI</h3>
+      <p>L'algorithme Rule-Based (fichier <code>explainability.py</code>) génère des explications en langage naturel :</p>
+      <pre>
+Si distance < 3 km     → "Artisan à proximité"
+Si note_moyenne > 4.5 → "Excellente réputation (4.8/5)"
+Si temps_réponse < 15 → "Réponse habituellement rapide"
+
+<span class="comment">// Exemple de sortie :</span>
+"Cet artisan est recommandé car : artisan à proximité (1.2 km),
+excellente réputation (4.9/5), réponse habituellement rapide (10 min)."
+</pre>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION 6 : FRONTEND -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="section page-break" id="s6">
+      <h2><span class="num">6</span> Frontend Next.js</h2>
+
+      <h3>Stack</h3>
+      <div class="grid-4">
+        <div class="stat-card"><div class="value" style="font-size:1rem;">Next.js 15</div><div class="label">App Router</div></div>
+        <div class="stat-card"><div class="value" style="font-size:1rem;">Tailwind CSS</div><div class="label">Design utility</div></div>
+        <div class="stat-card"><div class="value" style="font-size:1rem;">Framer Motion</div><div class="label">Animations</div></div>
+        <div class="stat-card"><div class="value" style="font-size:1rem;">TanStack Query</div><div class="label">État serveur</div></div>
+        <div class="stat-card"><div class="value" style="font-size:1rem;">Zustand</div><div class="label">État client</div></div>
+        <div class="stat-card"><div class="value" style="font-size:1rem;">Socket.io</div><div class="label">Temps réel</div></div>
+        <div class="stat-card"><div class="value" style="font-size:1rem;">Leaflet</div><div class="label">Cartographie</div></div>
+        <div class="stat-card"><div class="value" style="font-size:1rem;">Lucide</div><div class="label">Icônes</div></div>
+      </div>
+
+      <h3>Les 26 Pages</h3>
+      <table>
+        <tr><th>Route</th><th>Fonction</th><th>Complétude</th></tr>
+        <tr><td><code>/</code></td><td>Landing page avec Hero, Trust Band, Catégories Bento</td><td><span class="badge badge-green">✅</span></td></tr>
+        <tr><td><code>/search</code></td><td>Recherche avec classement IA + carte Leaflet</td><td><span class="badge badge-green">✅</span></td></tr>
+        <tr><td><code>/login</code></td><td>Authentification (50% branding / 50% formulaire)</td><td><span class="badge badge-green">✅</span></td></tr>
+        <tr><td><code>/register</code></td><td>Création de compte sécurisée (sans toggle de rôle)</td><td><span class="badge badge-green">✅</span></td></tr>
+        <tr><td><code>/artisan/[id]</code></td><td>Profil public d'un artisan</td><td><span class="badge badge-yellow">🟡 UI ok</span></td></tr>
+        <tr><td><code>/client</code></td><td>Dashboard client (KPIs + EscrowTracker + Timeline)</td><td><span class="badge badge-green">✅</span></td></tr>
+        <tr><td><code>/artisan</code></td><td>Dashboard artisan (KPIs + Pipeline Kanban)</td><td><span class="badge badge-green">✅</span></td></tr>
+        <tr><td><code>/admin</code></td><td>Administration (utilisateurs, litiges, AI demo)</td><td><span class="badge badge-yellow">🟡 Partiel</span></td></tr>
+        <tr><td><code>/admin/ai-demo</code></td><td>Démonstration IA pour la soutenance</td><td><span class="badge badge-green">✅</span></td></tr>
+        <tr><td colspan="2">Autres : /comment-ca-marche, /settings, /forgot-password, /artisans...</td><td><span class="badge badge-green">✅</span></td></tr>
+      </table>
+
+      <h3>Design System</h3>
+      <p>Palette de couleurs définie dans <code>tailwind.config.ts</code> :</p>
+      <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin:1rem 0;">
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <div style="width:24px;height:24px;border-radius:6px;background:#006c49;"></div>
+          <span style="font-size:0.85rem;">Primary Green <code>#006c49</code></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <div style="width:24px;height:24px;border-radius:6px;background:#6366f1;"></div>
+          <span style="font-size:0.85rem;">AI Indigo <code>#6366f1</code></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <div style="width:24px;height:24px;border-radius:6px;background:#f8f9ff;border:1px solid #ddd;"></div>
+          <span style="font-size:0.85rem;">Background <code>#f8f9ff</code></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <div style="width:24px;height:24px;border-radius:6px;background:#10b981;"></div>
+          <span style="font-size:0.85rem;">Accent <code>#10b981</code></span>
+        </div>
+      </div>
+
+      <h3>Composants Clés</h3>
+      <table>
+        <tr><th>Composant</th><th>Usage</th><th>Animation</th></tr>
+        <tr><td><code>AIBadge</code></td><td>Score de compatibilité IA (ex: "95% Match")</td><td>Glow indigo subtil toutes les 8s</td></tr>
+        <tr><td><code>TrustBadge</code></td><td>Bouclier vert de confiance certifié</td><td>—</td></tr>
+        <tr><td><code>ArtisanCard</code></td><td>Carte artisan au format Bento</td><td>Hover scale + shadow</td></tr>
+        <tr><td><code>EscrowTracker</code></td><td>Stepper visuel des fonds séquestrés</td><td>Transition progression 700ms</td></tr>
+        <tr><td><code>ChatWindow</code></td><td>Fenêtre de chat temps réel</td><td>Slide up + Fade</td></tr>
+        <tr><td><code>EmptyState</code></td><td>État vide (5 variantes)</td><td>Fade + Translate Y</td></tr>
+        <tr><td><code>Toast</code></td><td>Notifications (success, error, info, warning)</td><td>Slide + Fade, auto-disparition</td></tr>
+      </table>
+
+      <h3>Loading Premium</h3>
+      <p>Le fichier <code>loading.tsx</code> propose une expérience d'attente premium :</p>
+      <ul>
+        <li>Anneau SVG tournant avec gradient vert ↔ indigo</li>
+        <li>Messages morphing qui changent toutes les 2.5s ("Analyse des profils artisans...")</li>
+        <li>3 points lumineux qui clignotent en séquence</li>
+        <li>Fond animé subtil (gradient mobile sur 8 secondes)</li>
+      </ul>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION 7 : TRUST ENGINE -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="section page-break" id="s7">
+      <h2><span class="num">7</span> Trust Engine — Moteur de Confiance</h2>
+
+      <p>Le Trust Engine est le cœur de la plateforme. Il calcule 4 scores qui déterminent la fiabilité d'un artisan. Implémenté dans <code>trust-engine.service.ts</code>.</p>
+
+      <h3>Les 4 Scores</h3>
+
+      <div class="grid-2">
+        <div class="stat-card" style="text-align:left;">
+          <h4 style="color:var(--primary);">✅ Verification Score (VS)</h4>
+          <p style="font-size:0.85rem;">Pondération : <strong>25%</strong> du Trust Score final</p>
+          <p style="font-size:0.85rem;">Basé sur : KYC validé (60%), Email vérifié (20%), Téléphone vérifié (20%)</p>
+          <pre style="font-size:0.75rem;margin:0.5rem 0;">
+VS = (isKycVerified × 60) + (isEmailVerified × 20) + (isPhoneVerified × 20)
+          </pre>
+        </div>
+        <div class="stat-card" style="text-align:left;">
+          <h4 style="color:var(--primary);">⭐ Reliability Score (RS)</h4>
+          <p style="font-size:0.85rem;">Pondération : <strong>45%</strong> du Trust Score final</p>
+          <p style="font-size:0.85rem;">Basé sur : Taux de complétion (50%), Note moyenne (50%)</p>
+          <pre style="font-size:0.75rem;margin:0.5rem 0;">
+RS = (jobsCompleted / totalJobs × 50) + (rating / 5 × 50)
+          </pre>
+        </div>
+        <div class="stat-card" style="text-align:left;">
+          <h4 style="color:var(--primary);">📈 Experience Score (ES)</h4>
+          <p style="font-size:0.85rem;">Pondération : <strong>20%</strong> du Trust Score final</p>
+          <p style="font-size:0.85rem;">Basé sur : Jobs terminés, Ancienneté, Volume d'activité</p>
+          <pre style="font-size:0.75rem;margin:0.5rem 0;">
+ES = min(totalJobs / 100 × 40 + experienceYears × 10, 100)
+          </pre>
+        </div>
+        <div class="stat-card" style="text-align:left;">
+          <h4 style="color:var(--primary);">⚡ Response Score (RPS)</h4>
+          <p style="font-size:0.85rem;">Pondération : <strong>10%</strong> du Trust Score final</p>
+          <p style="font-size:0.85rem;">Basé sur : Temps de réponse moyen aux devis</p>
+          <pre style="font-size:0.75rem;margin:0.5rem 0;">
+RPS = max(0, 100 - avgResponseTimeMin × 2)
+          </pre>
+        </div>
+      </div>
+
+      <h3>Formule Finale</h3>
+      <pre style="font-size:0.9rem;text-align:center;">
+Trust Score = (VS × 0.25) + (RS × 0.45) + (ES × 0.20) + (RPS × 0.10)
+      </pre>
+      <p>Le Trust Score est affiché sur le profil de l'artisan, dans les résultats de recherche, et sur le dashboard artisan. Il est recalculé à chaque changement de statut de Job ou de note.</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION 8 : SÉCURITÉ -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="section page-break" id="s8">
+      <h2><span class="num">8</span> Sécurité & Authentification</h2>
+
+      <h3>Architecture de Sécurité</h3>
+      <pre>
+<span class="comment">// Middleware Next.js (Edge Runtime) — apps/web/middleware.ts</span>
+<span class="key">Request</span> → <span class="key">Check cookie 'session'</span> → Si absent → <span class="key">Redirect /login</span>
+                                              → Si présent → <span class="key">Laisse passer</span>
+
+<span class="comment">// Guards NestJS — apps/api/src/common/guards/</span>
+<span class="key">JwtAuthGuard</span> : Vérifie le token JWT dans le header Authorization
+<span class="key">RolesGuard</span> : Vérifie le rôle (CLIENT | ARTISAN | ADMIN) via @Roles() decorator
+
+<span class="comment">// Exemple :</span>
+@Roles(Role.ADMIN)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Get("users")
+async getUsers() { ... }
+</pre>
+
+      <h3>Flux de Connexion</h3>
+      <pre>
+<span class="number">1.</span> Utilisateur saisit email + mot de passe sur /login
+<span class="number">2.</span> POST /api/v1/auth/login → NestJS vérifie les credentials (bcrypt)
+<span class="number">3.</span> Si OK → { accessToken } + cookie httpOnly (refreshToken)
+<span class="number">4.</span> Frontend stocke accessToken dans localStorage + cookie 'session'
+<span class="number">5.</span> router.push('/client') → middleware lit 'session' → laisse passer
+<span class="number">6.</span> Le rôle est extrait du JWT (payload.role) pour la redirection
+</pre>
+
+      <h3>Mesures de Sécurité Implémentées</h3>
+      <table>
+        <tr><th>Mesure</th><th>Détail</th><th>Fichier</th></tr>
+        <tr><td>Hash des mots de passe</td><td>bcrypt (12 rounds)</td><td><code>auth.service.ts</code></td></tr>
+        <tr><td>Rate limiting</td><td>5 tentatives par email / 15 min</td><td><code>auth.service.ts</code></td></tr>
+        <tr><td>Refresh token httpOnly</td><td>Cookie inaccessible en JavaScript</td><td><code>auth.controller.ts</code></td></tr>
+        <tr><td>RBAC</td><td>3 rôles avec guards dédiés</td><td><code>roles.guard.ts</code></td></tr>
+        <tr><td>Validation des DTO</td><td>class-validator + class-transformer</td><td><code>dto/auth.dto.ts</code></td></tr>
+        <tr><td>CORS</td><td>Origine configurable</td><td><code>main.ts</code></td></tr>
+        <tr><td>Protection CSRF</td><td>SameSite cookie strict</td><td><code>auth.controller.ts</code></td></tr>
+      </table>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION 9 : DEVOPS -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="section page-break" id="s9">
+      <h2><span class="num">9</span> Infrastructure & DevOps</h2>
+
+      <h3>Services Docker</h3>
+      <table>
+        <tr><th>Service</th><th>Image</th><th>Port</th><th>Healthcheck</th></tr>
+        <tr><td>PostgreSQL</td><td>postgres:15-alpine</td><td>5432</td><td>✅ pg_isready</td></tr>
+        <tr><td>Redis</td><td>redis:7-alpine</td><td>6379</td><td>✅ redis-cli ping</td></tr>
+        <tr><td>API NestJS</td><td>Build multi-stage</td><td>3001</td><td>✅ wget /health</td></tr>
+        <tr><td>Next.js</td><td>Build multi-stage</td><td>3000</td><td>—</td></tr>
+        <tr><td>FastAPI ML</td><td>python:3.11-slim</td><td>8000</td><td>✅ HTTP /health</td></tr>
+        <tr><td>MinIO</td><td>minio/minio:latest</td><td>9000</td><td>✅ curl /minio/health</td></tr>
+      </table>
+
+      <h3>Variables d'Environnement</h3>
+      <p>Fichier <code>apps/api/.env</code> — 20+ variables :</p>
+      <div class="grid-2">
+        <pre style="font-size:0.75rem;">
+<span class="key">DATABASE_URL</span>=postgresql://...
+<span class="key">JWT_SECRET</span>=artisan237-super-secret-...
+<span class="key">JWT_ACCESS_TOKEN_EXPIRY</span>=15m
+<span class="key">JWT_REFRESH_TOKEN_EXPIRY</span>=7d
+<span class="key">STRIPE_SECRET_KEY</span>=sk_test_...
+<span class="key">AI_SERVICE_URL</span>=http://localhost:8000
+        </pre>
+        <pre style="font-size:0.75rem;">
+<span class="key">DIDIT_API_KEY</span>=O3hQGMCOy6beZ7_...
+<span class="key">DIDIT_WORKFLOW_ID</span>=4f367976-...
+<span class="key">SMTP_HOST</span>=smtp.gmail.com
+<span class="key">SMTP_USER</span>=booalbert60@gmail.com
+<span class="key">REDIS_URL</span>=redis://localhost:6379
+<span class="key">CORS_ORIGIN</span>=http://localhost:3000
+        </pre>
+      </div>
+
+      <h3>CI/CD</h3>
+      <p>Workflow GitHub Actions présent dans <code>.github/workflows/</code> — pipeline de lint, build et tests.</p>
+      <p>Déploiement configuré via <code>render.yaml</code> pour Render.com (4 services).</p>
+
+      <h3>Commandes de Démarrage</h3>
+      <pre>
+<span class="comment"># Lancer la base de données</span>
+sudo docker compose up -d db redis
+
+<span class="comment"># Lancer le backend</span>
+cd apps/api && npx nest start
+
+<span class="comment"># Lancer le microservice IA</span>
+cd apps/ml-service && source .venv/bin/activate && uvicorn app.main:app --reload --port 8000
+
+<span class="comment"># Lancer le frontend</span>
+cd apps/web && npx next dev
+</pre>
+
+      <p>Adresses : <code>http://localhost:3000</code> (Frontend) — <code>http://localhost:3001/api/docs</code> (Swagger) — <code>http://localhost:8000/docs</code> (FastAPI)</p>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION 10 : ÉTAT D'AVANCEMENT -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="section page-break" id="s10">
+      <h2><span class="num">10</span> État d'Avancement & Dette Technique</h2>
+
+      <h3>Tableau d'Avancement Fonctionnel</h3>
+      <table>
+        <tr><th>Fonctionnalité</th><th>État</th><th>Backend</th><th>Frontend</th></tr>
+        <tr><td>Authentification</td><td><span class="badge badge-green">✅ Fonctionnel</span></td><td>✅</td><td>✅</td></tr>
+        <tr><td>KYC (Didit)</td><td><span class="badge badge-green">✅ Fonctionnel</span></td><td>✅</td><td>✅</td></tr>
+        <tr><td>Marketplace</td><td><span class="badge badge-green">✅ Implémenté</span></td><td>✅</td><td>✅</td></tr>
+        <tr><td>Recherche IA</td><td><span class="badge badge-yellow">🟡 UI ok, API ok</span></td><td>✅</td><td>🟡 Non connecté</td></tr>
+        <tr><td>Matching IA</td><td><span class="badge badge-green">✅ Fonctionnel</span></td><td>✅</td><td>🟡 Non connecté</td></tr>
+        <tr><td>Chat temps réel</td><td><span class="badge badge-green">✅ Implémenté</span></td><td>✅</td><td>✅</td></tr>
+        <tr><td>Paiement Stripe</td><td><span class="badge badge-yellow">🟡 Partiel</span></td><td>✅</td><td>🟡 UI en cours</td></tr>
+        <tr><td>Devis</td><td><span class="badge badge-green">✅ Implémenté</span></td><td>✅</td><td>✅</td></tr>
+        <tr><td>Escrow</td><td><span class="badge badge-yellow">🟡 Partiel</span></td><td>✅</td><td>🟡 UI ok, non connecté</td></tr>
+        <tr><td>Notifications</td><td><span class="badge badge-yellow">🟡 Partiel</span></td><td>✅</td><td>❌</td></tr>
+        <tr><td>Avis</td><td><span class="badge badge-green">✅ Implémenté</span></td><td>✅</td><td>✅</td></tr>
+        <tr><td>Litiges</td><td><span class="badge badge-green">✅ Implémenté</span></td><td>✅</td><td>✅</td></tr>
+        <tr><td>Dashboard Artisan</td><td><span class="badge badge-green">✅ Implémenté</span></td><td>✅</td><td>✅ (mock)</td></tr>
+        <tr><td>Dashboard Client</td><td><span class="badge badge-green">✅ Implémenté</span></td><td>✅</td><td>✅ (mock)</td></tr>
+        <tr><td>Administration</td><td><span class="badge badge-yellow">🟡 Partiel</span></td><td>✅</td><td>🟡 Pages présentes</td></tr>
+        <tr><td>Trust Engine</td><td><span class="badge badge-green">✅ Fonctionnel</span></td><td>✅</td><td>🟡 Non connecté</td></tr>
+        <tr><td>Smart Job Builder</td><td><span class="badge badge-yellow">🟡 Partiel</span></td><td>✅</td><td>❌</td></tr>
+        <tr><td>XAI Explainability</td><td><span class="badge badge-green">✅ Fonctionnel</span></td><td>✅</td><td>🟡 Non connecté</td></tr>
+      </table>
+
+      <h3>Pourcentages d'Avancement</h3>
+      <div class="grid-4">
+        <div class="stat-card">
+          <div class="value">85%</div>
+          <div class="label">Backend</div>
+          <div class="progress-bar" style="margin:0.5rem 0;"><div class="fill fill-green" style="width:85%;"></div></div>
+          <div class="label">14 modules, 30+ endpoints</div>
+        </div>
+        <div class="stat-card">
+          <div class="value">65%</div>
+          <div class="label">Frontend</div>
+          <div class="progress-bar" style="margin:0.5rem 0;"><div class="fill fill-blue" style="width:65%;"></div></div>
+          <div class="label">26 pages, design premium</div>
+        </div>
+        <div class="stat-card ai">
+          <div class="value" style="color:var(--ai);">95%</div>
+          <div class="label">IA</div>
+          <div class="progress-bar" style="margin:0.5rem 0;"><div class="fill" style="width:95%;background:var(--ai);"></div></div>
+          <div class="label">Modèle + API + Tests</div>
+        </div>
+        <div class="stat-card">
+          <div class="value">75%</div>
+          <div class="label">Infrastructure</div>
+          <div class="progress-bar" style="margin:0.5rem 0;"><div class="fill fill-yellow" style="width:75%;"></div></div>
+          <div class="label">Docker + CI/CD</div>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:1rem;">
+        <div class="stat-card" style="display:inline-block;min-width:200px;">
+          <div class="value" style="color:var(--primary);">~75%</div>
+          <div class="label">Projet Global</div>
+          <div class="progress-bar" style="margin:0.5rem 0;"><div class="fill fill-green" style="width:75%;"></div></div>
+        </div>
+      </div>
+
+      <h3>Dette Technique — Problèmes Identifiés</h3>
+      <table>
+        <tr><th>Gravité</th><th>Problème</th><th>Impact</th></tr>
+        <tr><td><span class="badge badge-red">CRITIQUE</span></td><td>Connexion API non fonctionnelle (token JWT mal formé)</td><td>Application inutilisable pour un utilisateur connecté</td></tr>
+        <tr><td><span class="badge badge-red">CRITIQUE</span></td><td>Aucun test backend NestJS</td><td>Risque de régression sur Auth et Escrow</td></tr>
+        <tr><td><span class="badge badge-yellow">ÉLEVÉ</span></td><td>Données mock dans les dashboards et la recherche</td><td>Illusion de produit fini, pas de parcours testable</td></tr>
+        <tr><td><span class="badge badge-yellow">ÉLEVÉ</span></td><td>Pas de refresh token automatique (intercepteur 401 supprimé)</td><td>Expérience utilisateur dégradée</td></tr>
+        <tr><td><span class="badge badge-blue">MOYEN</span></td><td>Middleware RBAC simplifié (ne vérifie pas le rôle)</td><td>Sécurité frontend incomplète</td></tr>
+        <tr><td><span class="badge badge-blue">MOYEN</span></td><td>Police Google Fonts supprimée (timeout réseau)</td><td>Police système utilisée</td></tr>
+        <tr><td><span class="badge">FAIBLE</span></td><td>~50 warnings ESLint (console.log, any, non-null assertions)</td><td>Qualité de code</td></tr>
+      </table>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- SECTION 11 : PLAN DE SOUTENANCE -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="section page-break" id="s11">
+      <h2><span class="num">11</span> Plan de Soutenance Académique</h2>
+
+      <h3>Introduction (2 min)</h3>
+      <p><strong>L'accroche :</strong> "Aujourd'hui à Douala, trouver un bon plombier sur Facebook est un pari risqué. L'artisan peut être incompétent, et vous risquez de perdre votre avance financière."</p>
+      <p>Présenter le problème : arnaques, absence de traçabilité, difficulté à trouver le bon professionnel.</p>
+      <p>Montrer un écran WhatsApp d'une conversation type pour illustrer.</p>
+
+      <h3>Démonstration Phase 1 : La Magie de l'IA (5 min)</h3>
+      <ul>
+        <li>Ouvrir l'application côté Client sur mobile</li>
+        <li>Chercher "Électricien à Logbaba"</li>
+        <li><strong>Point clé :</strong> La liste n'est pas alphabétique. Le premier résultat affiche <strong>"⭐ Match IA 94%"</strong></li>
+        <li>Montrer le badge IA, cliquer pour voir l'explication : "À 2km, Note de 4.8/5, Répond en 15 min"</li>
+        <li>Expliquer brièvement le Random Forest : 59% note, 16% expérience, 8% réactivité</li>
+        <li>Montrer l'écran d'administration <code>/admin/ai-demo</code> pour le pipeline complet</li>
+      </ul>
+
+      <h3>Démonstration Phase 2 : Le Workflow Sécurisé (5 min)</h3>
+      <ul>
+        <li>Demander un devis à l'artisan recommandé</li>
+        <li>Basculer sur l'écran Artisan (split screen ou deuxième onglet)</li>
+        <li>L'artisan reçoit une notification, répond avec un devis à "15,000 FCFA"</li>
+        <li>Le client accepte le devis</li>
+        <li><strong>Point clé :</strong> L'écran de paiement Stripe apparaît. L'argent est débité mais pas envoyé à l'artisan — il est sur un compte séquestre (Escrow).</li>
+        <li>Montrer le dashboard client : "120,000 FCFA protégés"</li>
+      </ul>
+
+      <h3>Démonstration Phase 3 : Libération & Trust Score (3 min)</h3>
+      <ul>
+        <li>Marquer le Job comme terminé</li>
+        <li>Cliquer sur "Libérer les fonds"</li>
+        <li>Noter 5 étoiles</li>
+        <li><strong>Point clé :</strong> Le profil de l'artisan voit son Trust Score augmenter en temps réel</li>
+        <li>Montrer les 4 scores (VS, RS, ES, RPS) et leur calcul</li>
+      </ul>
+
+      <h3>Conclusion (1 min)</h3>
+      <p>"Une stack technologique moderne — Next.js, NestJS, FastAPI, PostgreSQL — au service d'un vrai problème local. L'Intelligence Artificielle n'est pas un gadget : elle améliore concrètement la confiance, la découverte et la rapidité."</p>
+
+      <h3>Points à Souligner au Jury</h3>
+      <table>
+        <tr><th>Point Technique</th><th>Valeur Démontrée</th></tr>
+        <tr><td>Monorepo Turborepo</td><td>Maîtrise des standards industriels modernes</td></tr>
+        <tr><td>Microservice IA dédié (FastAPI)</td><td>Scalabilité indépendante du modèle ML</td></tr>
+        <tr><td>Random Forest industrialisé</td><td>Dataset synthétique reproductible + 5 endpoints + tests</td></tr>
+        <tr><td>Escrow Stripe</td><td>Sécurisation financière de bout en bout</td></tr>
+        <tr><td>Trust Engine 4 scores</td><td>Système de confiance crédible et explicable</td></tr>
+        <tr><td>Architecture Mobile First</td><td>Optimisé pour 3G/4G Douala</td></tr>
+      </table>
+
+      <h3>Comptes de Test pour la Démonstration</h3>
+      <table>
+        <tr><th>Rôle</th><th>Email</th><th>Mot de Passe</th></tr>
+        <tr><td>Client</td><td><code>client@artisan237.com</code></td><td><code>Password123!</code></td></tr>
+        <tr><td>Artisan</td><td><code>artisan@artisan237.com</code></td><td><code>Password123!</code></td></tr>
+        <tr><td>Admin</td><td><code>admin@artisan237.com</code></td><td><code>Password123!</code></td></tr>
+      </table>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- FOOTER -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div style="text-align:center;padding:3rem 0;color:var(--text-muted);font-size:0.85rem;border-top:1px solid var(--border);margin-top:2rem;">
+      <strong style="color:var(--primary);">ARTISAN-237</strong> — Rapport Technique de Soutenance<br>
+      Généré le 05 Juin 2026 — Commit <code>1df0627</code><br>
+      <span style="font-size:0.75rem;">Document imprimable — Conçu pour Google Chrome</span>
+    </div>
+
+  </div>
+</body>
+</html>
