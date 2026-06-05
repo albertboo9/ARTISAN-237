@@ -12,7 +12,8 @@ import {
 import { JobsService } from "./jobs.service";
 import { CreateJobDto, UpdateJobStatusDto } from "./dto/jobs.dto";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
-import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { RolesGuard } from "../../common/guards/roles.guard";
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from "@nestjs/swagger";
 
 @ApiTags("jobs")
 @ApiBearerAuth()
@@ -47,6 +48,13 @@ export class JobsController {
       page: pageNum,
       pageSize: pageSizeNum,
     });
+  }
+
+  @ApiOperation({ summary: "Get my jobs (as client or artisan)" })
+  @ApiQuery({ name: "status", required: false, type: String })
+  @Get("my")
+  async getMyJobs(@Req() req: any, @Query("status") status?: string) {
+    return this.jobsService.findMyJobs(req.user.sub, req.user.role, status);
   }
 
   @ApiOperation({ summary: "Get details of a specific job" })

@@ -10,6 +10,37 @@ export class JobsService {
     private readonly aiGateway: AiGatewayService,
   ) {}
 
+  async findMyJobs(
+    userId: string,
+    role: string,
+    status?: string,
+  ) {
+    const where: any = {};
+    if (role === "CLIENT") {
+      where.clientId = userId;
+    } else if (role === "ARTISAN") {
+      // For artisans, find jobs where they have submitted a quote
+      where.quotes = { some: { artisan: { userId } } };
+    }
+    if (status) where.status = status;
+
+    return this.prisma.job.findMany({
+      where,
+      include: {
+        service: { select: { id: true, name: true } },
+        quotes: {
+          include: {
+            artisan: {
+              include: { user: { select: { id: true, firstName: true, lastName: true } } },
+            },
+          },
+        },
+        escrow: { select: { id: true, amount: true, status: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
   async createJob(clientId: string, dto: CreateJobDto) {
     const service = await this.prisma.service.findUnique({
       where: { id: dto.serviceId },
