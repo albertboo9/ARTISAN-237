@@ -7,10 +7,12 @@ import { ArrowLeft, CheckCircle, ShieldCheck, FileText, Loader2 } from 'lucide-r
 import Link from 'next/link';
 import { StripeProvider } from '../../../components/payment/stripe-provider';
 import { PaymentForm } from '../../../components/payment/payment-form';
-import { apiClient } from '../../../lib/api-client';
 import { showSuccessToast, showErrorToast } from '../../../lib/error-handler';
+import axios from 'axios';
 import Button from '../../../components/ui/button';
-import { PageTransition } from '../../../components/shared/page-transition';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+function unwrap(data: any) { return data?.data ?? data; }
 
 function PaymentContent() {
   const searchParams = useSearchParams();
@@ -24,62 +26,64 @@ function PaymentContent() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const getHeaders = () => {
+    const token = localStorage.getItem('accessToken');
+    return { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
+  };
+
   useEffect(() => {
-    async function fetchQuote() {
-      if (!quoteId) {
-        setIsLoading(false);
-        return;
-      }
-      
+    async function loadData() {
+      if (!quoteId) { setIsLoading(false); return; }
       try {
-        // Fetch quote details (simulated with api client for now)
-        // In real app: const data = await apiClient(`/quotes/${quoteId}`);
-        const data = await apiClient<any>(`/quotes?id=${quoteId}`).catch(() => null);
-        
-        // Mock data if API is not ready
-        setQuote(data?.[0] || {
-          id: quoteId,
-          jobId: jobId,
-          amount: 25000,
-          artisan: { firstName: 'Paul', lastName: 'Tchuente' },
-          description: 'Devis pour réparation plomberie',
-        });
+        // Fetch quotes for this job to find the one we accepted
+        if (jobId) {
+          const { data } = await axios.get(`${API_URL}/quotes/job/${jobId}`, getHeaders());
+          const quotes = unwrap(data);
+          if (Array.isArray(quotes)) {
+            const found = quotes.find((q: any) => q.id === quoteId);
+            if (found) setQuote(found);
+          }
+        }
       } catch (err) {
-        console.error(err);
+        // Fallback: show minimal data from URL params
+        setQuote({ id: quoteId, jobId, estimatedPrice: 0 });
       } finally {
         setIsLoading(false);
       }
     }
-    
-    fetchQuote();
+    loadData();
   }, [quoteId, jobId]);
 
-  const handlePaymentSuccess = async (paymentMethodId: string) => {
+  const handlePaymentSuccess = async () => {
     setIsProcessing(true);
     try {
-      // In a real app, send paymentMethodId to backend to confirm PaymentIntent
-      /*
-      await apiClient(`/financial/escrow/fund`, {
-        method: 'POST',
-        body: JSON.stringify({ jobId, quoteId, paymentMethodId })
-      });
-      */
+      // In real app: confirm PaymentIntent via backend
+      // For demo: simulate success then update job status
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // We simulate backend delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Update job status to IN_PROGRESS after payment
+      if (jobId) {
+        await axios.patch(`${API_URL}/jobs/${jobId}/status`, 
+          { status: 'IN_PROGRESS' },
+          getHeaders()
+        ).catch(() => {}); // Non-blocking
+      }
       
       setIsSuccess(true);
       showSuccessToast('Paiement réussi ! Les fonds sont sécurisés.');
     } catch (err) {
-      showErrorToast(err);
+      showErrorToast('Erreur lors du paiement');
+    } finally {
       setIsProcessing(false);
     }
   };
 
+  const amount = quote?.estimatedPrice || 0;
+
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
       </div>
     );
   }
@@ -87,9 +91,9 @@ function PaymentContent() {
   if (!quote && !isSuccess) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Devis introuvable ou paramètres manquants.</p>
+        <p className="text-on-surface-variant">Devis introuvable ou paramètres manquants.</p>
         <Link href="/client/quotes">
-          <Button variant="ghost" className="mt-4"><ArrowLeft className="h-4 w-4 mr-2" /> Retour aux devis</Button>
+          <Button variant="secondary" className="mt-4"><ArrowLeft className="h-4 w-4 mr-2" /> Retour aux devis</Button>
         </Link>
       </div>
     );
@@ -97,22 +101,26 @@ function PaymentContent() {
 
   if (isSuccess) {
     return (
-      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="max-w-md mx-auto text-center space-y-6 py-12">
+      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} 
+        className="max-w-md mx-auto text-center space-y-6 py-12"
+      >
         <div className="flex justify-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
             <CheckCircle className="h-10 w-10 text-green-600" />
           </div>
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Paiement validé !</h2>
-          <p className="text-muted-foreground mt-2">
-            Votre paiement de <strong>{quote?.amount?.toLocaleString() || 25000} FCFA</strong> a été placé sous séquestre. 
-            L'artisan va être notifié pour commencer les travaux.
+          <h2 className="text-2xl font-bold text-on-surface">Paiement validé !</h2>
+          <p className="text-on-surface-variant mt-2">
+            Votre paiement de <strong>{amount.toLocaleString()} FCFA</strong> est sécurisé via Escrow. 
+            L'artisan va commencer les travaux.
           </p>
         </div>
         <div className="pt-6">
           <Link href={`/client/missions/${jobId || quote?.jobId}`}>
-            <Button size="lg" className="w-full">Aller à la mission</Button>
+            <Button size="lg" className="w-full bg-brand-primary text-white hover:bg-brand-hover">
+              Aller à la mission
+            </Button>
           </Link>
         </div>
       </motion.div>
@@ -122,42 +130,44 @@ function PaymentContent() {
   return (
     <div className="max-w-2xl mx-auto space-y-8">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
+        <Button variant="secondary" size="sm" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Retour
         </Button>
         <div>
-          <h1 className="text-2xl font-bold">Paiement Sécurisé</h1>
-          <p className="text-muted-foreground text-sm">Réglez votre devis pour démarrer la mission</p>
+          <h1 className="text-2xl font-bold text-on-surface">Paiement Sécurisé</h1>
+          <p className="text-on-surface-variant text-sm">Réglez votre devis pour démarrer la mission</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Résumé du devis */}
         <div className="space-y-4">
-          <h3 className="font-semibold flex items-center gap-2">
-            <FileText className="h-4 w-4 text-primary" /> Résumé du devis
+          <h3 className="font-semibold flex items-center gap-2 text-on-surface">
+            <FileText className="h-4 w-4 text-brand-primary" /> Résumé du devis
           </h3>
           <div className="bento-card p-6 space-y-4">
             <div>
-              <p className="text-xs text-muted-foreground">Artisan</p>
-              <p className="font-medium">{quote.artisan?.firstName} {quote.artisan?.lastName}</p>
+              <p className="text-xs text-on-surface-variant">Artisan</p>
+              <p className="font-medium text-on-surface">
+                {quote?.artisan?.user?.firstName || 'Artisan'} {quote?.artisan?.user?.lastName || ''}
+              </p>
             </div>
             <div className="pt-4 border-t border-border">
-              <p className="text-xs text-muted-foreground">Description</p>
-              <p className="text-sm mt-1">{quote.description}</p>
+              <p className="text-xs text-on-surface-variant">Description</p>
+              <p className="text-sm mt-1 text-on-surface-variant">{quote?.description || 'Devis accepté'}</p>
             </div>
             <div className="pt-4 border-t border-border">
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Total à payer</span>
-                <span className="text-2xl font-bold text-foreground">{quote.amount?.toLocaleString()} FCFA</span>
+                <span className="text-on-surface-variant">Total à payer</span>
+                <span className="text-2xl font-bold text-on-surface">{amount.toLocaleString()} FCFA</span>
               </div>
             </div>
           </div>
           
-          <div className="flex items-start gap-3 p-4 bg-primary/5 rounded-xl text-sm">
-            <ShieldCheck className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-            <p className="text-muted-foreground">
-              <strong className="text-foreground">Garantie Artisan237 :</strong> Vos fonds sont bloqués sur un compte sécurisé et ne seront reversés à l'artisan qu'une fois la mission validée par vous.
+          <div className="flex items-start gap-3 p-4 bg-brand-primary/5 rounded-xl text-sm border border-brand-primary/20">
+            <ShieldCheck className="h-5 w-5 text-brand-primary flex-shrink-0 mt-0.5" />
+            <p className="text-on-surface-variant">
+              <strong className="text-on-surface">Garantie Escrow :</strong> Vos fonds sont bloqués et ne seront reversés qu'à la validation des travaux.
             </p>
           </div>
         </div>
@@ -166,7 +176,7 @@ function PaymentContent() {
         <div className="bento-card p-6">
           <StripeProvider>
             <PaymentForm 
-              amount={quote.amount} 
+              amount={amount} 
               onSuccess={handlePaymentSuccess}
               isLoading={isProcessing}
             />
@@ -179,10 +189,8 @@ function PaymentContent() {
 
 export default function PaymentPage() {
   return (
-    <PageTransition>
-      <Suspense fallback={<div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
-        <PaymentContent />
-      </Suspense>
-    </PageTransition>
+    <Suspense fallback={<div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-brand-primary" /></div>}>
+      <PaymentContent />
+    </Suspense>
   );
 }
