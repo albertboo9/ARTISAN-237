@@ -2,33 +2,56 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, CheckCircle, Clock, XCircle, ArrowRight, Loader2 } from 'lucide-react';
-import { cn } from '../../../lib/cn';
-import { useAuthStore } from '../../../stores/auth.store';
-import { apiClient } from '../../../lib/api-client';
+import { FileText, CheckCircle, Clock, XCircle, ArrowRight, Loader2, MessageSquare, MapPin } from 'lucide-react';
 import Button from '../../../components/ui/button';
+import { showErrorToast, showSuccessToast } from '../../../lib/error-handler';
+import axios from 'axios';
 import Link from 'next/link';
-import { PageTransition } from '../../../components/shared/page-transition';
+import { cn } from '../../../lib/cn';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+
+function unwrap(data: any) { return data?.data ?? data; }
 
 export default function QuotesPage() {
-  const { user } = useAuthStore();
   const [quotes, setQuotes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [acceptingId, setAcceptingId] = useState<string | null>(null);
+
+  const getHeaders = () => {
+    const token = localStorage.getItem('accessToken');
+    return { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
+  };
 
   useEffect(() => {
     async function fetchQuotes() {
-      if (!user?.id) return;
       try {
-        const data = await apiClient<any[]>(`/quotes?clientId=${user.id}`);
-        setQuotes(data || []);
+        const { data } = await axios.get(`${API_URL}/quotes?status=PENDING,ACCEPTED,REJECTED`, getHeaders());
+        const body = unwrap(data);
+        setQuotes(Array.isArray(body) ? body : body?.data || []);
       } catch (err) {
-        console.error(err);
+        showErrorToast('Erreur lors du chargement des devis');
       } finally {
         setIsLoading(false);
       }
     }
     fetchQuotes();
-  }, [user]);
+  }, []);
+
+  const handleAccept = async (quoteId: string) => {
+    setAcceptingId(quoteId);
+    try {
+      await axios.patch(`${API_URL}/quotes/${quoteId}/status`, { status: 'ACCEPTED' }, getHeaders());
+      showSuccessToast('Devis accepté !');
+      // Refresh
+      const { data } = await axios.get(`${API_URL}/quotes?status=PENDING,ACCEPTED,REJECTED`, getHeaders());
+      setQuotes(Array.isArray(unwrap(data)) ? unwrap(data) : []);
+    } catch (err) {
+      showErrorToast('Erreur lors de l\'acceptation du devis');
+    } finally {
+      setAcceptingId(null);
+    }
+  };
 
   const statusConfig: Record<string, { label: string; style: string; icon: any }> = {
     PENDING: { label: 'En attente', style: 'bg-amber-100 text-amber-700', icon: Clock },
@@ -39,65 +62,77 @@ export default function QuotesPage() {
   if (isLoading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
       </div>
     );
   }
 
   return (
-    <PageTransition>
-      <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="min-h-screen bg-brand-bg py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Mes devis</h1>
-          <p className="text-muted-foreground">Consultez et acceptez les devis de vos artisans</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">Mes devis reçus</h1>
+          <p className="text-on-surface-variant mt-1">Consultez et acceptez les devis de vos artisans</p>
         </div>
 
         {quotes.length === 0 ? (
           <div className="bento-card text-center py-16">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mx-auto mb-4">
-              <FileText className="h-8 w-8 text-primary" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-primary/10 mx-auto mb-4">
+              <FileText className="h-8 w-8 text-brand-primary" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground">Aucun devis reçu</h3>
-            <p className="text-muted-foreground mt-2 max-w-md mx-auto">
-              Vous n'avez pas encore reçu de devis pour vos missions. Patientez un peu, les artisans vont bientôt répondre.
+            <h3 className="text-lg font-semibold text-on-surface">Aucun devis reçu</h3>
+            <p className="text-on-surface-variant mt-2 max-w-md mx-auto">
+              Vous n'avez pas encore reçu de devis pour vos missions. Les artisans vont bientôt répondre.
             </p>
           </div>
         ) : (
           <div className="space-y-3">
-            {quotes.map((q, i) => {
+            {quotes.map((q: any, i: number) => {
               const config = statusConfig[q.status || 'PENDING'] || statusConfig.PENDING;
               const Icon = config.icon;
+              const artisanName = q.artisan?.user?.firstName ? `${q.artisan.user.firstName} ${q.artisan.user.lastName}` : 'Artisan';
               return (
                 <motion.div key={q.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                  className="bento-card flex flex-col sm:flex-row sm:items-center gap-4 border border-border/50"
+                  className="bento-card flex flex-col sm:flex-row sm:items-center gap-4"
                 >
                   <div className="flex items-center gap-4 flex-1">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 flex-shrink-0">
-                      <FileText className="h-6 w-6 text-primary" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-accent/10 flex-shrink-0">
+                      <FileText className="h-6 w-6 text-brand-accent" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-sm font-medium truncate">{q.job?.title || 'Mission'} - Par {q.artisan?.firstName || 'Artisan'}</h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Reçu le {new Date(q.createdAt).toLocaleDateString('fr-FR')} — {q.amount?.toLocaleString()} FCFA
+                      <p className="text-sm font-medium text-on-surface">{artisanName}</p>
+                      <p className="text-xs text-on-surface-variant mt-1">
+                        {q.job?.service?.name || 'Mission'} — {q.estimatedPrice ? `${Number(q.estimatedPrice).toLocaleString()} FCFA` : ''}
                       </p>
+                      {q.description && <p className="text-xs text-on-surface-variant mt-0.5 line-clamp-1">{q.description}</p>}
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3 mt-4 sm:mt-0 pt-4 sm:pt-0 border-t border-border sm:border-0 justify-between sm:justify-end">
+                  <div className="flex items-center gap-3 sm:justify-end">
                     <span className={cn('inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium', config.style)}>
                       <Icon className="h-3.5 w-3.5" /> {config.label}
                     </span>
                     
                     {q.status === 'PENDING' && (
-                      <Link href={`/client/payment?quoteId=${q.id}&jobId=${q.jobId}`}>
-                        <Button size="sm">
-                          Payer <ArrowRight className="h-4 w-4 ml-1.5" />
+                      <div className="flex gap-2">
+                        <Button size="sm"
+                          isLoading={acceptingId === q.id}
+                          onClick={() => handleAccept(q.id)}
+                          className="bg-brand-primary text-white hover:bg-brand-hover">
+                          <CheckCircle className="h-4 w-4 mr-1" /> Accepter
                         </Button>
-                      </Link>
+                        <Link href={`/client/payment?quoteId=${q.id}&jobId=${q.jobId}`}>
+                          <Button size="sm" variant="secondary" className="text-xs">
+                            Payer <ArrowRight className="h-4 w-4 ml-1" />
+                          </Button>
+                        </Link>
+                      </div>
                     )}
                     {q.status === 'ACCEPTED' && (
                       <Link href={`/client/missions/${q.jobId}`}>
-                        <Button variant="secondary" size="sm">Voir la mission</Button>
+                        <Button variant="secondary" size="sm">
+                          <MessageSquare className="h-4 w-4 mr-1" /> Voir la mission
+                        </Button>
                       </Link>
                     )}
                   </div>
@@ -107,6 +142,6 @@ export default function QuotesPage() {
           </div>
         )}
       </div>
-    </PageTransition>
+    </div>
   );
 }
