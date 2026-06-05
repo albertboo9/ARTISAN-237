@@ -96,7 +96,14 @@ function decodeJwtPayload(token: string): any {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
     const payload = parts[1];
-    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    // atob() n'est pas fiable en Edge Runtime Next.js
+    // Utilisation du Buffer de l'Edge Runtime
+    const decoded = new TextDecoder().decode(
+      Uint8Array.from(
+        payload.replace(/-/g, '+').replace(/_/g, '/'),
+        (c) => c.charCodeAt(0)
+      )
+    );
     return JSON.parse(decoded);
   } catch {
     return null;

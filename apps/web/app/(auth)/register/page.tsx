@@ -5,11 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, User, Phone, ShieldCheck, Sparkles } from 'lucide-react';
-import { useLogin } from '../../hooks/useAuth';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const loginMutation = useLogin();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [form, setForm] = useState({
     email: '',
@@ -56,22 +55,8 @@ export default function RegisterPage() {
         throw new Error(data.message || data.detail || 'Erreur lors de l\'inscription');
       }
 
-      // Connexion automatique après inscription
-      loginMutation.mutate(
-        { email: form.email, password: form.password },
-        {
-          onSuccess: (data) => {
-            const role = data.user.role;
-            if (role === 'ARTISAN') router.push('/artisan');
-            else if (role === 'ADMIN') router.push('/admin');
-            else router.push('/client');
-          },
-          onError: () => {
-            // Si auto-login échoue, on redirige vers login
-            router.push('/login?registered=true');
-          },
-        }
-      );
+      setIsSubmitting(false);
+      router.push('/login?registered=true');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Une erreur est survenue';
       if (message.includes('email') || message.includes('Email')) {
@@ -164,8 +149,8 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <button type="submit" disabled={loginMutation.isPending} className="w-full h-12 rounded-xl bg-brand-primary text-white font-bold hover:bg-brand-hover disabled:opacity-50 transition-all mt-2">
-              {loginMutation.isPending ? 'Création en cours...' : 'Créer mon compte'}
+            <button type="submit" disabled={isSubmitting} className="w-full h-12 rounded-xl bg-brand-primary text-white font-bold hover:bg-brand-hover disabled:opacity-50 transition-all mt-2">
+              {isSubmitting ? 'Création en cours...' : 'Créer mon compte'}
             </button>
           </form>
 
