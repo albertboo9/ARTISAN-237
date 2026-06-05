@@ -1,389 +1,198 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import dynamic from 'next/dynamic';
-import { Search, SlidersHorizontal, Navigation, Star, ShieldCheck, MapPin, X } from 'lucide-react';
-import Button from '../components/ui/button';
-import { cn } from '../lib/cn';
-import 'leaflet/dist/leaflet.css';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Search, ShieldCheck, Sparkles, Lock, ArrowRight, CheckCircle2 } from "lucide-react";
+import { motion } from "framer-motion";
+import Button from "../components/ui/button";
 
-// Lazy load Leaflet map components
-const MapContainer = dynamic(() => import('react-leaflet').then((m) => m.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import('react-leaflet').then((m) => m.TileLayer), { ssr: false });
-const Marker = dynamic(() => import('react-leaflet').then((m) => m.Marker), { ssr: false });
-const Popup = dynamic(() => import('react-leaflet').then((m) => m.Popup), { ssr: false });
-const ZoomControl = dynamic(() => import('react-leaflet').then((m) => m.ZoomControl), { ssr: false });
+const CATEGORIES = [
+  { name: "Plomberie", icon: "💧", color: "bg-blue-50 text-blue-700" },
+  { name: "Électricité", icon: "⚡", color: "bg-amber-50 text-amber-700" },
+  { name: "Maçonnerie", icon: "🧱", color: "bg-stone-50 text-stone-700" },
+  { name: "Menuiserie", icon: "saws", color: "bg-orange-50 text-orange-700" },
+  { name: "Froid & Climatisation", icon: "❄️", color: "bg-cyan-50 text-cyan-700" },
+  { name: "Peinture", icon: "🎨", color: "bg-purple-50 text-purple-700" },
+];
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-const DOUALA: [number, number] = [4.0511, 9.7085];
+export default function Homepage() {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
 
-interface ArtisanData {
-  id?: string;
-  userId?: string;
-  firstName: string;
-  lastName: string;
-  bio?: string;
-  lat: number;
-  lng: number;
-  rating: number;
-  totalJobs: number;
-  isAvailable: boolean;
-  isKycVerified?: boolean;
-  markerColor: string;
-  distance?: number | null;
-}
-
-export default function MarketplacePage() {
-  const [artisans, setArtisans] = useState<ArtisanData[]>([]);
-  const [filtered, setFiltered] = useState<ArtisanData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selected, setSelected] = useState<ArtisanData | null>(null);
-  const [search, setSearch] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [radius, setRadius] = useState(15);
-  const [availOnly, setAvailOnly] = useState(false);
-  const mapRef = useRef<any>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    // Fix Leaflet default icon path on client side only
-    if (typeof window !== 'undefined') {
-      import('leaflet').then((L) => {
-        delete (L.Icon.Default.prototype as any)._getIconUrl;
-        L.Icon.Default.mergeOptions({
-          iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-        });
-      });
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.trim()) {
+      router.push(`/search?q=${encodeURIComponent(query)}`);
     }
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    fetch(`${API}/artisans/map`)
-      .then((r) => r.json())
-      .then((d) => {
-        const list: ArtisanData[] = d?.data?.artisans || d?.artisans || [];
-        setArtisans(list);
-        setFiltered(list);
-      })
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
-  }, [mounted]);
-
-  useEffect(() => {
-    let result = [...artisans];
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (a) =>
-          `${a.firstName} ${a.lastName}`.toLowerCase().includes(q) ||
-          (a.bio || '').toLowerCase().includes(q),
-      );
-    }
-    if (availOnly) result = result.filter((a) => a.isAvailable);
-    setFiltered(result);
-  }, [search, availOnly, artisans]);
-
-  if (!mounted) return <div className="h-screen bg-background" />;
+  };
 
   return (
-    <div className="relative h-screen w-full" style={{ isolation: 'isolate' }}>
-      <AnimatePresence>
-        {isLoading && (
-          <motion.div
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 z-[99999] flex items-center justify-center bg-background"
-          >
-            <div className="flex flex-col items-center gap-4">
-              <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              <p className="text-sm text-muted-foreground">Recherche des artisans...</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="min-h-screen bg-brand-bg text-on-surface">
+      {/* 1. HERO SECTION */}
+      <section className="relative pt-32 pb-20 px-4 md:px-8 max-w-7xl mx-auto flex flex-col items-center text-center overflow-hidden">
+        {/* Lueur d'arrière-plan */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-brand-primary/10 rounded-full blur-[100px] -z-10"></div>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="max-w-3xl w-full"
+        >
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-ai/10 text-brand-ai text-sm font-semibold mb-6">
+            <Sparkles size={16} className="animate-pulse-soft" />
+            <span>Smart Job Builder propulsé par l'IA</span>
+          </div>
 
-      {/* Search bar */}
-      <div className="absolute top-4 left-4 right-4 z-[9999] mx-auto max-w-xl pointer-events-none">
-        <div className="pointer-events-auto">
-          <motion.div
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="glass rounded-2xl p-2 shadow-lg"
-          >
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  type="text"
-                  placeholder="Rechercher un métier, un artisan..."
-                  className="w-full h-10 pl-10 pr-4 text-sm bg-transparent border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-on-surface mb-6 leading-tight">
+            Trouvez un artisan compétent. <br />
+            <span className="text-brand-primary">Sans vous faire arnaquer.</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-on-surface-variant mb-10 max-w-2xl mx-auto">
+            La première plateforme au Cameroun qui sécurise votre argent et utilise l'intelligence artificielle pour vous trouver le meilleur professionnel certifié.
+          </p>
+
+          <form onSubmit={handleSearch} className="relative w-full max-w-2xl mx-auto group">
+            <div className="absolute inset-0 bg-brand-primary/20 rounded-2xl blur-xl group-focus-within:bg-brand-primary/30 transition-all duration-300 -z-10"></div>
+            <div className="flex items-center bg-card border-2 border-surface-container-high rounded-2xl p-2 shadow-sm focus-within:border-brand-primary focus-within:shadow-md transition-all duration-300">
+              <div className="pl-4 pr-2 text-on-surface-variant">
+                <Search size={24} />
               </div>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={cn(
-                  'flex items-center gap-2 px-3 h-10 rounded-xl text-sm font-medium transition-colors',
-                  showFilters
-                    ? 'bg-primary text-white'
-                    : 'bg-surface-container text-foreground hover:bg-surface-container-high',
-                )}
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                <span className="hidden sm:inline">Filtres</span>
-              </button>
-            </div>
-            <AnimatePresence>
-              {showFilters && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="border-t border-border/50 mt-2 pt-3 pb-1 space-y-3">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Rayon : {radius} km
-                      </label>
-                      <input
-                        type="range"
-                        min={1}
-                        max={50}
-                        value={radius}
-                        onChange={(e) => setRadius(Number(e.target.value))}
-                        className="w-full h-1.5 bg-surface-container rounded-full appearance-none accent-primary"
-                      />
-                    </div>
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={availOnly}
-                        onChange={(e) => setAvailOnly(e.target.checked)}
-                        className="rounded border-border text-primary"
-                      />
-                      Disponibles uniquement
-                    </label>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Map */}
-      <div className="h-full w-full z-0">
-        <MapContainer center={DOUALA} zoom={13} className="h-full w-full" zoomControl={false} ref={mapRef}>
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <ZoomControl position="bottomright" />
-          {filtered.map((a) => {
-            let icon: any = undefined;
-            if (typeof window !== 'undefined') {
-              const L = require('leaflet');
-              const bgColor =
-                a.markerColor === 'green'
-                  ? 'bg-green-500'
-                  : a.markerColor === 'orange'
-                    ? 'bg-amber-500'
-                    : 'bg-gray-400';
-              
-              const html = `
-                <div class="relative flex h-10 w-10 items-center justify-center rounded-2xl border-2 border-white shadow-lg ${bgColor} text-white font-bold overflow-hidden transition-transform hover:scale-110 hover:-translate-y-1">
-                  ${
-                    a.avatarUrl
-                      ? `<img src="${a.avatarUrl}" class="h-full w-full object-cover" />`
-                      : `${a.firstName?.[0] || ''}${a.lastName?.[0] || ''}`
-                  }
-                  ${a.isKycVerified ? `<div class="absolute -bottom-1 -right-1 h-3 w-3 bg-blue-500 rounded-full border border-white"></div>` : ''}
-                </div>
-              `;
-              
-              icon = L.divIcon({
-                html,
-                className: 'custom-leaflet-marker',
-                iconSize: [40, 40],
-                iconAnchor: [20, 40], // Point to the bottom center
-              });
-            }
-
-            return (
-              <Marker
-                key={a.id || a.userId}
-                position={[a.lat, a.lng]}
-                icon={icon}
-                eventHandlers={{ click: () => setSelected(a) }}
-              >
-                <Popup>
-                  <div className="p-1 min-w-[160px]">
-                    <h3 className="font-semibold text-sm">
-                      {a.firstName} {a.lastName}
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{a.bio || ''}</p>
-                    <div className="flex items-center gap-2 mt-1.5 text-xs">
-                      <span className="text-amber-500">&#9733; {a.rating}</span>
-                      <span className="text-muted-foreground">({a.totalJobs})</span>
-                    </div>
-                  </div>
-                </Popup>
-              </Marker>
-            );
-          })}
-        </MapContainer>
-      </div>
-
-      {/* Bottom bar */}
-      <div className="absolute bottom-4 left-4 right-4 z-[9999] mx-auto max-w-sm pointer-events-none">
-        <div className="pointer-events-auto">
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="glass rounded-2xl p-4 shadow-lg"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                  <MapPin className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    {filtered.length} artisan{filtered.length !== 1 ? 's' : ''}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Douala, Cameroun</p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => mapRef.current?.flyTo?.(DOUALA, 13)}
-              >
-                <Navigation className="h-4 w-4" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Quel problème souhaitez-vous résoudre aujourd'hui ?"
+                className="flex-1 bg-transparent border-none focus:outline-none text-lg h-14 placeholder:text-on-surface-variant/60"
+              />
+              <Button type="submit" size="lg" className="h-14 px-8 rounded-xl bg-brand-primary hover:bg-brand-hover text-lg font-semibold shadow-[0_4px_14px_0_rgba(0,108,73,0.39)] hover:shadow-[0_6px_20px_rgba(0,108,73,0.23)] hover:-translate-y-0.5 transition-all duration-200">
+                Trouver
               </Button>
             </div>
-            <div className="space-y-1 max-h-[100px] overflow-y-auto">
-              {filtered.slice(0, 3).map((a, i) => (
-                <button
-                  key={a.id || i}
-                  onClick={() => setSelected(a)}
-                  className="flex w-full items-center gap-3 p-1.5 rounded-xl hover:bg-surface-container transition-colors"
-                >
-                  <div
-                    className={cn(
-                      'flex h-7 w-7 items-center justify-center rounded-lg text-[10px] font-bold text-white',
-                      a.markerColor === 'green'
-                        ? 'bg-green-500'
-                        : a.markerColor === 'orange'
-                          ? 'bg-amber-500'
-                          : 'bg-gray-400',
-                    )}
-                  >
-                    {a.firstName?.[0]}
-                    {a.lastName?.[0]}
-                  </div>
-                  <div className="flex-1 text-left">
-                    <span className="text-sm font-medium">
-                      {a.firstName} {a.lastName}
-                    </span>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
-                      {a.rating}
-                      {a.distance != null && (
-                        <span> &middot; {a.distance.toFixed(1)} km</span>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </div>
+          </form>
+        </motion.div>
+      </section>
 
-      {/* Modal */}
-      <AnimatePresence>
-        {selected && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center bg-black/20 backdrop-blur-sm"
-            onClick={() => setSelected(null)}
-          >
+      {/* 2. TRUST BAND */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="border-y border-surface-container-high bg-card py-8"
+      >
+        <div className="max-w-5xl mx-auto px-4 flex flex-wrap justify-center items-center gap-10 md:gap-20 text-on-surface-variant font-medium">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="text-brand-primary" size={28} />
+            <span className="text-sm md:text-base">Identités Vérifiées (KYC)</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Lock className="text-slate-700" size={28} />
+            <span className="text-sm md:text-base">Paiements Sécurisés (Escrow)</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Sparkles className="text-brand-ai" size={28} />
+            <span className="text-sm md:text-base">Match IA à 99.9%</span>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* 3. CATEGORIES BENTO */}
+      <section className="py-24 px-4 md:px-8 max-w-7xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Nos catégories principales</h2>
+          <p className="text-on-surface-variant text-lg">Des professionnels vérifiés pour chaque besoin du quotidien.</p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+          {CATEGORIES.map((cat, idx) => (
             <motion.div
-              initial={{ y: 100, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 100, opacity: 0 }}
-              className="w-full max-w-md bg-card rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
+              key={cat.name}
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: idx * 0.1 }}
+              className="group cursor-pointer bento-card flex flex-col items-center text-center p-8 hover:-translate-y-1 transition-all"
             >
-              <div className="flex justify-center pt-2 sm:hidden">
-                <div className="h-1.5 w-12 rounded-full bg-border" />
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4 ${cat.color} group-hover:scale-110 transition-transform duration-300`}>
+                {cat.icon}
               </div>
-              <div className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={cn(
-                        'flex h-14 w-14 items-center justify-center rounded-2xl text-lg font-bold text-white',
-                        selected.markerColor === 'green'
-                          ? 'bg-green-500'
-                          : selected.markerColor === 'orange'
-                            ? 'bg-amber-500'
-                            : 'bg-gray-400',
-                      )}
-                    >
-                      {selected.firstName?.[0]}
-                      {selected.lastName?.[0]}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold">
-                        {selected.firstName} {selected.lastName}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                        <span className="text-sm font-medium">{selected.rating}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {selected.totalJobs} missions
-                        </span>
-                        {selected.isKycVerified && (
-                          <ShieldCheck className="h-4 w-4 text-primary" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setSelected(null)}
-                    className="p-1.5 rounded-xl hover:bg-surface-container"
-                  >
-                    <X className="h-5 w-5 text-muted-foreground" />
-                  </button>
-                </div>
-                {selected.bio && (
-                  <p className="mt-4 text-sm text-muted-foreground">{selected.bio}</p>
-                )}
-                <div className="mt-4 flex gap-3">
-                  <Button className="flex-1" size="lg">
-                    Contacter
-                  </Button>
-                  <Button variant="secondary" size="lg" className="flex-1">
-                    Voir le profil
-                  </Button>
-                </div>
+              <h3 className="font-semibold text-lg">{cat.name}</h3>
+              <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="text-brand-primary text-sm font-medium flex items-center gap-1">
+                  Explorer <ArrowRight size={14} />
+                </span>
               </div>
             </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* 4. POURQUOI NOUS FAIRE CONFIANCE */}
+      <section className="py-24 px-4 md:px-8 bg-surface-container-low border-y border-surface-container-high">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">La confiance est notre seul produit.</h2>
+            <p className="text-on-surface-variant text-lg mb-8 leading-relaxed">
+              Nous avons repensé la mise en relation pour éliminer les risques. L'artisan ne reçoit son argent que lorsque vous validez la fin des travaux.
+            </p>
+            <ul className="space-y-4">
+              {[
+                "L'argent est bloqué de façon neutre",
+                "Identité et casier des artisans vérifiés",
+                "Score de confiance transparent calculé par IA",
+                "Support en cas de litige"
+              ].map((item, i) => (
+                <li key={i} className="flex items-center gap-3">
+                  <CheckCircle2 className="text-brand-primary shrink-0" size={24} />
+                  <span className="font-medium text-on-surface">{item}</span>
+                </li>
+              ))}
+            </ul>
           </motion.div>
-        )}
-      </AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="relative h-[500px] bg-card rounded-3xl border border-surface-container-high shadow-xl p-8 flex flex-col justify-center overflow-hidden"
+          >
+             {/* Abstract UI representation */}
+             <div className="absolute inset-0 bg-gradient-to-br from-brand-bg to-brand-surface opacity-50"></div>
+             <div className="relative z-10 space-y-6">
+                <div className="bg-card p-4 rounded-xl border border-surface-container-high shadow-sm flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary">
+                    <Lock size={20} />
+                  </div>
+                  <div>
+                    <p className="font-semibold">Fonds Sécurisés</p>
+                    <p className="text-sm text-on-surface-variant">50,000 FCFA bloqués en Escrow</p>
+                  </div>
+                </div>
+                <div className="bg-card p-4 rounded-xl border border-surface-container-high shadow-sm flex items-center gap-4 ml-8">
+                  <div className="w-12 h-12 rounded-full bg-brand-ai/10 flex items-center justify-center text-brand-ai">
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <p className="font-semibold">Match IA Garanti</p>
+                    <p className="text-sm text-on-surface-variant">Artisan validé pour ce besoin exact</p>
+                  </div>
+                </div>
+                <div className="bg-brand-primary text-on-primary p-4 rounded-xl shadow-[0_10px_30px_rgba(0,108,73,0.3)] flex items-center justify-between mt-8">
+                  <span className="font-semibold">Travaux terminés</span>
+                  <CheckCircle2 size={24} />
+                </div>
+             </div>
+          </motion.div>
+        </div>
+      </section>
+
     </div>
   );
 }

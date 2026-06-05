@@ -1,0 +1,7 @@
+# ARTISAN-237 ML Service — Dépendances (versions figées)
+fastapi==0.115.6
+uvicorn==0.30.6
+pydantic==2.10.4
+scikit-learn==1.3.2
+pandas==2.2.3
+numpy==1.26.4

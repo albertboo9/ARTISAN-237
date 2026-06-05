@@ -5,6 +5,7 @@ import { ConfigService } from "@nestjs/config";
 import { HttpService } from "@nestjs/axios";
 import { KycStatus } from "@prisma/client";
 import { firstValueFrom, catchError } from "rxjs";
+import { TrustEngineService } from "./trust-engine.service";
 
 interface MapQueryParams {
   lat?: number;
@@ -22,6 +23,7 @@ export class ArtisansService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
+    private readonly trustEngineService: TrustEngineService,
   ) {}
 
   // ──────────────────────────────────────────────────
@@ -182,7 +184,12 @@ export class ArtisansService {
       throw new BadRequestException("Profil artisan introuvable");
     }
     
-    return profile;
+    const trustScore = await this.trustEngineService.calculateTrustScore(userId);
+
+    return {
+      ...profile,
+      trustScore,
+    };
   }
 
   async updateProfile(userId: string, dto: UpdateArtisanProfileDto) {

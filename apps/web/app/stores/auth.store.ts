@@ -18,7 +18,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   setUser: (user: User | null) => void;
-  login: (email: string, password: string) => Promise<User>;
+  login: (email: string, password: string) => Promise<User | null>;
   register: (data: {
     email: string;
     password: string;

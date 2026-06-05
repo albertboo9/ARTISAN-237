@@ -68,7 +68,7 @@ async function main() {
   });
 
   // 4. Génération Massive des Clients
-  const clients = [];
+  const clients: any[] = [];
   console.log('Création de 15 clients...');
   for (let i = 0; i < 15; i++) {
     const firstName = faker.person.firstName();
@@ -93,7 +93,7 @@ async function main() {
   }
 
   // 5. Génération Massive des Artisans
-  const artisans = [];
+  const artisans: any[] = [];
   console.log('Création de 30 artisans...');
   for (let i = 0; i < 30; i++) {
     const firstName = faker.person.firstName();
@@ -143,15 +143,19 @@ async function main() {
           }
         })
       },
+    });
+    // Re-fetch artisan with profile since upsert doesn't support include
+    const artisanWithProfile = await prisma.user.findUnique({
+      where: { email },
       include: { artisanProfile: true }
     });
-    artisans.push(artisan);
+    if (artisanWithProfile) artisans.push(artisanWithProfile);
   }
 
   // 6. Création de Jobs aléatoires
   console.log('Création de 40 missions (jobs)...');
   for (let i = 0; i < 40; i++) {
-    const client = faker.helpers.arrayElement(clients);
+    const client = faker.helpers.arrayElement(clients)!;
     const service = faker.helpers.arrayElement(services);
     
     const lat = 4.0 + Math.random() * 0.1;
@@ -176,7 +180,7 @@ async function main() {
 
     // Generate quotes for the job
     const numQuotes = faker.number.int({ min: 1, max: 4 });
-    const jobArtisans = faker.helpers.arrayElements(artisans, numQuotes);
+    const jobArtisans = faker.helpers.arrayElements(artisans, numQuotes).filter(Boolean);
     
     let acceptedQuoteId: string | null = null;
     

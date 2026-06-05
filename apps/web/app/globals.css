@@ -4,37 +4,47 @@
 
 @layer base {
   :root {
-    --background: 225 100% 99%;
+    --background: 231 100% 98%; /* #f8f9ff */
     --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
+    --card: 0 0% 100%; /* #ffffff */
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 162 100% 21%;
+    
+    /* Primary Trust Green #006c49 */
+    --primary: 161 100% 21%;
     --primary-foreground: 0 0% 100%;
-    --primary-container: 158 82% 42%;
-    --primary-container-foreground: 162 100% 13%;
+    
+    /* Hover/Container #005236 */
+    --primary-container: 160 100% 16%;
+    --primary-container-foreground: 0 0% 100%;
+    
     --secondary: 221 18% 39%;
     --secondary-foreground: 0 0% 100%;
     --secondary-container: 222 55% 90%;
     --secondary-container-foreground: 223 10% 37%;
     --muted: 220 14% 92%;
     --muted-foreground: 221 10% 55%;
-    --accent: 158 82% 42%;
-    --accent-foreground: 162 100% 13%;
+    
+    /* AI Indigo #6366f1 */
+    --accent: 239 84% 67%;
+    --accent-foreground: 0 0% 100%;
+    
     --destructive: 0 72% 42%;
     --destructive-foreground: 0 0% 100%;
     --border: 214 22% 82%;
     --input: 214 22% 82%;
-    --ring: 162 100% 21%;
-    --radius: 0.5rem;
-    --surface: 225 100% 99%;
-    --surface-dim: 215 52% 77%;
-    --surface-bright: 225 100% 99%;
+    --ring: 161 100% 21%;
+    --radius: 0.75rem; /* rounded-xl par défaut pour les cards */
+    
+    /* Surfaces */
+    --surface: 231 100% 98%;
+    --surface-dim: 221 100% 93%;
+    --surface-bright: 231 100% 98%;
     --surface-container-lowest: 0 0% 100%;
-    --surface-container-low: 217 100% 96%;
-    --surface-container: 215 100% 95%;
-    --surface-container-high: 215 100% 93%;
+    --surface-container-low: 221 100% 97%; /* #eff4ff */
+    --surface-container: 221 100% 95%;
+    --surface-container-high: 221 100% 93%;
     --surface-container-highest: 214 94% 91%;
     --on-surface: 222 47% 11%;
     --on-surface-variant: 156 10% 26%;

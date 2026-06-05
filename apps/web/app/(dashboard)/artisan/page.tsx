@@ -1,208 +1,209 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { FileText, TrendingUp, Star, ShieldCheck, Clock, Settings, ArrowRight, Users, Loader2 } from 'lucide-react';
-import Button from '../../components/ui/button';
-import { cn } from '../../lib/cn';
-import { useAuthStore } from '../../stores/auth.store';
-import { apiClient } from '../../lib/api-client';
+import React from "react";
+import { motion } from "framer-motion";
+import { useAllArtisans, useArtisanById } from "../../hooks/useArtisans";
+import { useMe } from "../../hooks/useAuth";
+import {
+  TrendingUp, ShieldCheck, Clock, CheckCircle2,
+  MoreVertical, MapPin, Plus, Zap, MessageSquare, DollarSign
+} from "lucide-react";
+import Button from "../../components/ui/button";
+import { EscrowTracker } from "../../components/artisan/EscrowTracker";
+import { TrustBadge } from "../../components/artisan/TrustBadge";
+import { AIBadge } from "../../components/artisan/AIBadge";
+
+// ── Animation variants ──────────────────────────────
+const fadeUp = {
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+};
+
+const stagger = {
+  animate: { transition: { staggerChildren: 0.08 } },
+};
+
+// ── Interface Pipeline ──────────────────────────────
+interface PipelineCard {
+  id: string;
+  title: string;
+  description: string;
+  aiMatch: number;
+  amount: string;
+  time: string;
+  location: string;
+  status: "nouvelle" | "devis" | "travaux" | "termine";
+  escrowAmount?: string;
+}
+
+const MOCK_PIPELINE: PipelineCard[] = [
+  {
+    id: "1", title: "Fuite d'eau sous évier", description: "Bonjour, j'ai une fuite importante dans ma cuisine depuis ce matin. L'eau coule sous l'évier et le placard commence à gonfler.",
+    aiMatch: 95, amount: "—", time: "Aujourd'hui, 08:30", location: "Bonanjo, Douala", status: "nouvelle",
+  },
+  {
+    id: "2", title: "Installation Chauffe-eau", description: "Remplacement d'un chauffe-eau de 50L par un modèle plus récent. Travaux prévus dans la salle de bain principale.",
+    aiMatch: 88, amount: "45,000 FCFA", time: "Hier, 14:15", location: "Akwa, Douala", status: "devis",
+  },
+  {
+    id: "3", title: "Réparation Climatisation", description: "Climatiseur split qui ne refroidit plus. Diagnostic déjà réalisé : fuite de gaz probable.",
+    aiMatch: 92, amount: "65,000 FCFA bloqués", time: "Il y a 2 jours", location: "Bonapriso, Douala", status: "travaux", escrowAmount: "65,000 FCFA",
+  },
+];
+
+const COLUMNS = [
+  { key: "nouvelle", label: "Nouvelles Demandes", color: "border-l-brand-ai" },
+  { key: "devis", label: "Devis Envoyés", color: "border-l-brand-accent" },
+  { key: "travaux", label: "Travaux Sécurisés", color: "border-l-brand-primary" },
+];
 
 export default function ArtisanDashboard() {
-  const { user } = useAuthStore();
-  const [quotes, setQuotes] = useState<any[]>([]);
-  const [profile, setProfile] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: me } = useMe();
 
-  // Derive KYC status
-  const kycStatus = (user as any)?.kycVerifications?.[0]?.status || 'UNVERIFIED';
-
-  useEffect(() => {
-    async function fetchData() {
-      if (!user?.id) return;
-      try {
-        const [quotesData, profileData] = await Promise.all([
-          apiClient<any[]>(`/quotes?artisanId=${user.id}`).catch(() => []),
-          apiClient<any>(`/artisans/profile`).catch(() => null),
-        ]);
-        setQuotes(quotesData || []);
-        setProfile(profileData);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchData();
-  }, [user]);
-
-  const stats = [
-    { label: 'Devis soumis', value: quotes.length, icon: FileText, color: 'bg-blue-500/10 text-blue-600' },
-    { label: 'Devis acceptés', value: quotes.filter(q => q.status === 'ACCEPTED').length, icon: Star, color: 'bg-amber-500/10 text-amber-600' },
-    { label: 'Missions en cours', value: quotes.filter(q => q.status === 'ACCEPTED').length, icon: Clock, color: 'bg-green-500/10 text-green-600' },
-    { label: 'Missions complétées', value: profile?.totalJobs || 0, icon: TrendingUp, color: 'bg-purple-500/10 text-purple-600' },
+  const kpis = [
+    { icon: DollarSign, label: "Revenus (30j)", value: "150k", change: "+12%", color: "text-brand-primary" },
+    { icon: ShieldCheck, label: "Trust Score", value: "98", unit: "/100", change: "Excellent", color: "text-white", bg: "bg-brand-primary", progress: 98 },
+    { icon: Clock, label: "Temps réponse", value: "12", unit: "min", change: "Top 5%", color: "text-brand-primary" },
+    { icon: CheckCircle2, label: "Taux succès", value: "100%", change: "124 missions", color: "text-brand-primary" },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Espace Artisan</h1>
-          <p className="text-muted-foreground">Gérez votre profil, soumettez des devis et suivez vos missions</p>
-        </div>
-        <Link href="/artisan/profil">
-          <Button variant="secondary"><Settings className="h-4 w-4 mr-1.5" /> Modifier mon profil</Button>
-        </Link>
-      </div>
+    <div className="min-h-screen bg-brand-bg py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
 
-      {/* KYC Banner */}
-      {kycStatus !== 'VERIFIED' && (
-        <div className="bento-card bg-gradient-to-r from-amber-50 to-amber-100/50 border-amber-200/50">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/20">
-              <ShieldCheck className="h-6 w-6 text-amber-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold text-amber-800">Vérification KYC requise</h3>
-              <p className="text-xs text-amber-700/80">
-                {kycStatus === 'PENDING' ? 'Votre vérification est en cours.' : 'Pour recevoir des missions, vérifiez votre identité.'}
-              </p>
-            </div>
-            <Link href="/artisan/kyc">
-              <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white">
-                {kycStatus === 'PENDING' ? 'Voir le statut' : 'Vérifier maintenant'}
-              </Button>
-            </Link>
+        {/* ── Header ─────────────────────────────── */}
+        <motion.div className="flex items-center justify-between mb-8" {...fadeUp}>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-on-surface tracking-tight">
+              Bonjour, {me?.firstName || "Artisan"}
+            </h1>
+            <p className="text-on-surface-variant mt-1 flex items-center gap-2">
+              <ShieldCheck size={16} className="text-brand-primary" />
+              Votre Trust Score est excellent — continuez ainsi.
+            </p>
           </div>
-        </div>
-      )}
+          <Button className="hidden sm:flex items-center gap-2 bg-on-surface text-surface hover:bg-on-surface/90 rounded-full h-11 px-6 font-semibold">
+            <Plus size={18} /> Nouveau service
+          </Button>
+        </motion.div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, i) => {
-          const Icon = stat.icon;
-          return (
+        {/* ── KPIs (Linear Style) ────────────────── */}
+        <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-10" variants={stagger} initial="initial" animate="animate">
+          {kpis.map((kpi, i) => (
             <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="bento-card"
+              key={kpi.label}
+              variants={fadeUp}
+              className={`relative p-5 rounded-2xl border border-surface-container-high shadow-sm flex flex-col justify-between h-32 overflow-hidden ${kpi.bg || "bg-card"}`}
             >
-              <div className="flex items-center gap-4">
-                <div className={cn('flex h-12 w-12 items-center justify-center rounded-xl', stat.color)}>
-                  <Icon className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                </div>
+              {kpi.bg && (
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-primary to-brand-primary/80" />
+              )}
+              <div className={`relative z-10 flex items-center gap-2 text-sm font-medium ${kpi.bg ? "text-white/80" : "text-on-surface-variant"}`}>
+                <kpi.icon size={16} /> {kpi.label}
+              </div>
+              <div className="relative z-10">
+                <p className={`text-3xl font-bold tracking-tight ${kpi.bg ? "text-white" : "text-on-surface"}`}>
+                  {kpi.value}
+                  {kpi.unit && <span className="text-xl font-normal opacity-70">{kpi.unit}</span>}
+                </p>
+                <p className={`text-xs font-medium mt-0.5 ${kpi.bg ? "text-white/70" : "text-brand-primary"}`}>
+                  {kpi.change}
+                </p>
+                {kpi.progress && (
+                  <div className="w-full h-1 bg-white/20 rounded-full mt-2 overflow-hidden">
+                    <div className="h-full bg-white rounded-full" style={{ width: `${kpi.progress}%` }} />
+                  </div>
+                )}
               </div>
             </motion.div>
-          );
-        })}
-      </div>
+          ))}
+        </motion.div>
 
-      {/* Recent quotes + Profile */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Devis récents</h2>
-            <Link href="/artisan/devis" className="text-sm text-primary hover:underline">Tout voir</Link>
-          </div>
-          
-          {quotes.length === 0 ? (
-            <div className="bento-card text-center py-12 flex flex-col items-center justify-center border-dashed border-2 bg-surface-container/30">
-              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                <FileText className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-1">Aucun devis pour le moment</h3>
-              <p className="text-sm text-muted-foreground max-w-sm mb-6">
-                Vous n'avez pas encore soumis de devis. Allez sur la carte pour trouver des missions proches de chez vous.
-              </p>
-              <Link href="/">
-                <Button>Trouver des missions</Button>
-              </Link>
-            </div>
-          ) : (
-            quotes.slice(0, 3).map((quote, i) => (
-              <motion.div
-                key={quote.id || i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="bento-card flex items-center gap-4"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                  <FileText className="h-5 w-5 text-primary" />
+        {/* ── Pipeline Kanban ────────────────────── */}
+        <h2 className="text-xl font-bold text-on-surface mb-4 flex items-center gap-2">
+          <Zap size={20} className="text-brand-ai" /> Pipeline des missions
+        </h2>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          {COLUMNS.map((col) => {
+            const cards = MOCK_PIPELINE.filter((c) => c.status === col.key);
+            return (
+              <div key={col.key} className="space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-surface-container-high">
+                  <h3 className="font-semibold text-sm text-on-surface-variant uppercase tracking-wider flex items-center gap-2">
+                    <span className={`w-1 h-4 rounded-full ${col.color.replace("border-l-", "bg-")}`} />
+                    {col.label}
+                  </h3>
+                  <span className="bg-surface-container text-on-surface px-2 py-0.5 rounded-full text-xs font-semibold">{cards.length}</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-foreground truncate">{quote.job?.title || 'Mission'}</h3>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className={cn(
-                      'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium',
-                      quote.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
-                      quote.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
-                      'bg-blue-100 text-blue-700'
-                    )}>
-                      {quote.status || 'PENDING'}
-                    </span>
-                    <span className="text-xs text-muted-foreground font-semibold">{Number(quote.estimatedPrice || 0).toLocaleString()} FCFA</span>
+
+                {cards.length === 0 ? (
+                  <div className="h-32 border-2 border-dashed border-surface-container flex items-center justify-center rounded-xl">
+                    <p className="text-sm text-on-surface-variant font-medium">Aucune demande</p>
                   </div>
-                </div>
-                <Link href="/artisan/devis">
-                  <Button variant="ghost" size="sm"><ArrowRight className="h-4 w-4" /></Button>
-                </Link>
-              </motion.div>
-            ))
-          )}
+                ) : (
+                  cards.map((card) => (
+                    <motion.div
+                      key={card.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-card p-4 rounded-xl border border-surface-container-high shadow-sm hover:shadow-md hover:border-brand-ai/30 transition-all duration-200 cursor-pointer group relative"
+                    >
+                      {/* AI Match Badge */}
+                      <div className="flex justify-between items-start mb-3">
+                        <AIBadge score={card.aiMatch} />
+                        <button className="text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                          <MoreVertical size={16} />
+                        </button>
+                      </div>
+
+                      <h4 className="font-bold text-on-surface text-[15px] mb-1">{card.title}</h4>
+                      <p className="text-sm text-on-surface-variant mb-3 line-clamp-2 leading-relaxed">{card.description}</p>
+
+                      {/* Escrow info */}
+                      {card.escrowAmount && (
+                        <div className="mb-3 bg-brand-primary/5 p-3 rounded-lg border border-brand-primary/20">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-brand-primary">
+                            <ShieldCheck size={16} />
+                            {card.escrowAmount} sécurisés
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between text-xs font-medium text-on-surface-variant pt-2 border-t border-surface-container-high/50">
+                        <span className="flex items-center gap-1">
+                          <MapPin size={12} /> {card.location}
+                        </span>
+                        <span>{card.time}</span>
+                      </div>
+
+                      {/* CTA */}
+                      <div className="mt-3">
+                        {card.status === "nouvelle" && (
+                          <Button className="w-full h-9 text-xs font-semibold bg-surface-container text-on-surface hover:bg-brand-primary hover:text-white transition-all rounded-lg">
+                            <MessageSquare size={14} className="mr-1.5" /> Faire un devis
+                          </Button>
+                        )}
+                        {card.status === "devis" && (
+                          <Button className="w-full h-9 text-xs font-semibold bg-brand-accent/10 text-brand-accent hover:bg-brand-accent hover:text-white transition-all rounded-lg">
+                            <MessageSquare size={14} className="mr-1.5" /> Relancer
+                          </Button>
+                        )}
+                        {card.status === "travaux" && (
+                          <Button className="w-full h-9 text-xs font-semibold bg-brand-primary text-white hover:bg-brand-hover rounded-lg">
+                            <CheckCircle2 size={14} className="mr-1.5" /> Marquer Terminé
+                          </Button>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Votre profil</h2>
-          <div className="bento-card space-y-4">
-            <div className="flex items-center gap-3">
-              {user?.avatarUrl ? (
-                <img src={user.avatarUrl} alt="Avatar" className="h-14 w-14 rounded-2xl object-cover border-2 border-primary/20" />
-              ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary font-bold text-lg">
-                  {user?.firstName?.[0] || 'A'}{user?.lastName?.[0] || 'A'}
-                </div>
-              )}
-              <div>
-                <h3 className="font-semibold text-foreground">{user?.firstName} {user?.lastName}</h3>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" /> {profile?.rating || '4.8'}
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl bg-surface-container text-center">
-                <p className="text-lg font-semibold text-foreground">{profile?.experienceYears || 0}+</p>
-                <p className="text-xs text-muted-foreground">Ans d'exp.</p>
-              </div>
-              <div className="p-3 rounded-xl bg-surface-container text-center">
-                <p className={cn('text-lg font-semibold', profile?.isAvailable ? 'text-green-600' : 'text-amber-600')}>
-                  {profile?.isAvailable ? 'Disponible' : 'Occupé'}
-                </p>
-                <p className="text-xs text-muted-foreground">Statut</p>
-              </div>
-            </div>
-            <Link href="/artisan/profil">
-              <Button variant="secondary" size="sm" className="w-full"><Users className="h-4 w-4 mr-1.5" /> Voir mon profil</Button>
-            </Link>
-          </div>
-        </div>
       </div>
     </div>
   );

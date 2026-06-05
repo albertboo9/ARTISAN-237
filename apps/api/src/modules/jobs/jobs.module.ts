@@ -3,11 +3,12 @@ import { PrismaModule } from '../../prisma/prisma.module';
 import { AiGatewayModule } from '../ai-gateway/ai-gateway.module';
 import { JobsController } from './jobs.controller';
 import { JobsService } from './jobs.service';
+import { JobsAiService } from './jobs.ai.service';
 
 @Module({
   imports: [PrismaModule, AiGatewayModule],
   controllers: [JobsController],
-  providers: [JobsService],
-  exports: [JobsService],
+  providers: [JobsService, JobsAiService],
+  exports: [JobsService, JobsAiService],
 })
 export class JobsModule {}

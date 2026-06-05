@@ -146,8 +146,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="flex items-center gap-3">
                 {isArtisan && (
                   <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container text-xs font-medium text-muted-foreground">
-                    <ShieldCheck className={cn("h-4 w-4", user?.kycVerifications?.some(k => k.status === 'VERIFIED') ? "text-green-500" : "text-amber-500")} />
-                    {user?.kycVerifications?.some(k => k.status === 'VERIFIED') ? "Vérifié" : "Non vérifié"}
+                    <ShieldCheck className={cn("h-4 w-4", (user as any)?.isKycVerified ? "text-green-500" : "text-amber-500")} />
+                    {(user as any)?.isKycVerified ? "Vérifié" : "Non vérifié"}
                   </div>
                 )}
                 <button className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface-container transition-colors">
