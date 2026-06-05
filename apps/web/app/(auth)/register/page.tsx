@@ -2,227 +2,179 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, User, Phone, Briefcase, UserCheck, AlertCircle } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { useAuth } from '../../hooks/use-auth';
-import Button from '../../components/ui/button';
-import Input from '../../components/ui/input';
-import { cn } from '../../lib/cn';
-
-interface RegisterForm {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-}
+import { Mail, Lock, Eye, EyeOff, ArrowRight, User, Phone, ShieldCheck, Sparkles } from 'lucide-react';
+import { useLogin } from '../../hooks/useAuth';
 
 export default function RegisterPage() {
-  const { handleRegister } = useAuth();
+  const router = useRouter();
+  const loginMutation = useLogin();
+
+  const [form, setForm] = useState({
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+  });
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<'CLIENT' | 'ARTISAN'>('CLIENT');
-  const [isLoading, setIsLoading] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>();
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  const onSubmit = async (data: RegisterForm) => {
-    setIsLoading(true);
-    setServerError(null);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!form.email || !form.password || !form.firstName || !form.lastName || !form.phoneNumber) {
+      setError('Tous les champs sont obligatoires.');
+      return;
+    }
+
     try {
-      await handleRegister({ ...data, role });
-    } catch (error: any) {
-      // Handle specific HTTP errors with French messages
-      const message = error?.message || '';
-      if (message.includes('Email already registered') || message.includes('409')) {
-        setServerError('Cet email est déjà utilisé. Essayez de vous connecter ou utilisez un autre email.');
-      } else if (message.includes('Phone number already registered')) {
-        setServerError('Ce numéro de téléphone est déjà associé à un compte.');
-      } else if (message.includes('400') || message.includes('validation')) {
-        setServerError('Veuillez vérifier les informations saisies.');
-      } else {
-        setServerError(message || 'Une erreur est survenue. Veuillez réessayer.');
+      // Le backend détermine le rôle automatiquement.
+      // Si l'email contient "admin", l'inscription échouera (admin créé uniquement en seed).
+      // Sinon, le backend décide du rôle selon l'email ou d'autres critères métier.
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+          firstName: form.firstName,
+          lastName: form.lastName,
+          phoneNumber: form.phoneNumber,
+          // Aucun rôle envoyé — c'est le backend qui décide
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || data.detail || 'Erreur lors de l\'inscription');
       }
-    } finally {
-      setIsLoading(false);
+
+      // Connexion automatique après inscription
+      loginMutation.mutate(
+        { email: form.email, password: form.password },
+        {
+          onSuccess: (data) => {
+            const role = data.user.role;
+            if (role === 'ARTISAN') router.push('/artisan');
+            else if (role === 'ADMIN') router.push('/admin');
+            else router.push('/client');
+          },
+          onError: () => {
+            // Si auto-login échoue, on redirige vers login
+            router.push('/login?registered=true');
+          },
+        }
+      );
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Une erreur est survenue';
+      if (message.includes('email') || message.includes('Email')) {
+        setError('Cet email est déjà utilisé. Veuillez vous connecter.');
+      } else {
+        setError(message);
+      }
     }
   };
 
   return (
-    <div className="min-h-screen flex bg-surface">
-      {/* Left Panel - Brand (Desktop) */}
-      <div className="hidden lg:flex lg:w-5/12 relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/80">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-        <div className="relative z-10 flex flex-col justify-between p-12">
-          <div>
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-                <span className="text-lg font-bold text-white">A</span>
-              </div>
-              <span className="text-xl font-semibold text-white">Artisan237</span>
-            </Link>
-          </div>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-brand-bg">
+      {/* GAUCHE : Branding */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-surface-container-high overflow-hidden p-12 flex-col justify-between">
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/20 to-brand-ai/10" />
+        <div className="relative z-10 text-brand-primary font-bold text-2xl tracking-tight">ARTISAN-237</div>
+        <div className="relative z-10 max-w-md">
+          <h1 className="text-4xl font-bold text-on-surface mb-6 leading-tight">
+            Rejoignez la plateforme de confiance.
+          </h1>
           <div className="space-y-6">
-            <h2 className="text-3xl font-bold text-white leading-tight">
-              Rejoignez la communauté des artisans à Douala
-            </h2>
-            <p className="text-white/70 text-lg">
-              {role === 'ARTISAN'
-                ? 'Développez votre activité, recevez des missions et gérez vos clients en toute simplicité.'
-                : 'Trouvez les meilleurs artisans vérifiés près de chez vous, en toute confiance.'}
-            </p>
-            <div className="flex items-center gap-4">
-              <div className="flex -space-x-2">
-                {['J', 'M', 'P', 'A'].map((letter, i) => (
-                  <div key={i} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 border-2 border-primary text-xs font-bold text-white">
-                    {letter}
-                  </div>
-                ))}
+            <div className="flex gap-4">
+              <div className="w-12 h-12 rounded-full bg-brand-primary/10 flex items-center justify-center shrink-0">
+                <ShieldCheck className="text-brand-primary" />
               </div>
-              <p className="text-sm text-white/70">+200 utilisateurs actifs</p>
+              <div>
+                <h3 className="font-semibold text-lg">100% sécurisé</h3>
+                <p className="text-on-surface-variant text-sm mt-1">Paiements bloqués jusqu'à satisfaction. KYC obligatoire pour les artisans.</p>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <div className="w-12 h-12 rounded-full bg-brand-ai/10 flex items-center justify-center shrink-0">
+                <Sparkles className="text-brand-ai" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Décision intelligente</h3>
+                <p className="text-on-surface-variant text-sm mt-1">Notre IA vous recommande les meilleurs artisans de votre quartier.</p>
+              </div>
             </div>
           </div>
-          <p className="text-sm text-white/40">&copy; 2026 Artisan237. Tous droits réservés.</p>
         </div>
       </div>
 
-      {/* Right Panel - Form */}
-      <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md space-y-6">
-          {/* Mobile Logo */}
-          <div className="lg:hidden flex flex-col items-center gap-2 mb-2">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-                <span className="text-lg font-bold text-white">A</span>
-              </div>
-              <span className="text-xl font-semibold text-foreground">Artisan237</span>
-            </Link>
+      {/* DROITE : Formulaire */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12">
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-md">
+          <div className="lg:hidden text-brand-primary font-bold text-2xl tracking-tight mb-8 text-center">ARTISAN-237</div>
+          <div className="text-center lg:text-left mb-10">
+            <h2 className="text-3xl font-bold text-on-surface mb-2">Créer un compte</h2>
+            <p className="text-on-surface-variant">C'est rapide et sécurisé.</p>
           </div>
 
-          <div className="space-y-2 text-center lg:text-left">
-            <h1 className="text-3xl font-bold text-foreground">Créer un compte</h1>
-            <p className="text-muted-foreground">Rejoignez la marketplace des artisans à Douala</p>
-          </div>
-
-          {/* Role Toggle */}
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setRole('CLIENT')}
-              className={cn(
-                'flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200',
-                role === 'CLIENT'
-                  ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10'
-                  : 'border-border hover:border-primary/30',
-              )}
-            >
-              <div className={cn('p-2.5 rounded-lg transition-colors', role === 'CLIENT' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground')}>
-                <UserCheck className="h-5 w-5" />
-              </div>
-              <span className={cn('text-sm font-medium', role === 'CLIENT' ? 'text-primary' : 'text-foreground')}>Client</span>
-              <span className="text-xs text-muted-foreground">Je cherche un artisan</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('ARTISAN')}
-              className={cn(
-                'flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200',
-                role === 'ARTISAN'
-                  ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10'
-                  : 'border-border hover:border-primary/30',
-              )}
-            >
-              <div className={cn('p-2.5 rounded-lg transition-colors', role === 'ARTISAN' ? 'bg-primary text-white' : 'bg-muted text-muted-foreground')}>
-                <Briefcase className="h-5 w-5" />
-              </div>
-              <span className={cn('text-sm font-medium', role === 'ARTISAN' ? 'text-primary' : 'text-foreground')}>Artisan</span>
-              <span className="text-xs text-muted-foreground">Je propose mes services</span>
-            </button>
-          </div>
-
-          {/* Server Error Banner */}
-          {serverError && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-start gap-3 p-4 rounded-xl bg-destructive/5 border border-destructive/20"
-            >
-              <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-destructive">{serverError}</p>
-                {serverError.includes('déjà utilisé') && (
-                  <Link href="/login" className="text-xs text-primary hover:underline mt-1 inline-block">
-                    Se connecter à la place →
-                  </Link>
-                )}
-              </div>
-            </motion.div>
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 mb-4">{error}</div>
           )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="Prénom" placeholder="Jean" icon={<User className="h-4 w-4" />} error={errors.firstName?.message} {...register('firstName', { required: 'Le prénom est requis' })} />
-              <Input label="Nom" placeholder="Dupont" icon={<User className="h-4 w-4" />} error={errors.lastName?.message} {...register('lastName', { required: 'Le nom est requis' })} />
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-semibold text-on-surface">Prénom</label>
+                <input name="firstName" value={form.firstName} onChange={handleChange} className="w-full h-11 px-4 rounded-xl border border-surface-container-high bg-card focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none mt-1" placeholder="Jean" />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-on-surface">Nom</label>
+                <input name="lastName" value={form.lastName} onChange={handleChange} className="w-full h-11 px-4 rounded-xl border border-surface-container-high bg-card focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none mt-1" placeholder="Dupont" />
+              </div>
             </div>
-            <Input
-              label="Email"
-              type="email"
-              placeholder="vous@exemple.com"
-              icon={<Mail className="h-4 w-4" />}
-              error={errors.email?.message}
-              {...register('email', {
-                required: 'L\'email est requis',
-                pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Format d\'email invalide' },
-              })}
-            />
-            <Input
-              label="Téléphone"
-              type="tel"
-              placeholder="+237 6XX XXX XXX"
-              icon={<Phone className="h-4 w-4" />}
-              error={errors.phoneNumber?.message}
-              {...register('phoneNumber', {
-                required: 'Le téléphone est requis',
-                pattern: { value: /^\+?[0-9\s]{9,15}$/, message: 'Numéro de téléphone invalide' },
-              })}
-            />
-            <div className="relative">
-              <Input
-                label="Mot de passe"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Min. 8 caractères"
-                icon={<Lock className="h-4 w-4" />}
-                error={errors.password?.message}
-                {...register('password', {
-                  required: 'Le mot de passe est requis',
-                  minLength: { value: 8, message: 'Minimum 8 caractères' },
-                })}
-              />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-[38px] text-muted-foreground hover:text-foreground transition-colors">
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+            <div>
+              <label className="text-sm font-semibold text-on-surface">Email</label>
+              <div className="relative mt-1">
+                <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+                <input name="email" type="email" value={form.email} onChange={handleChange} className="w-full h-11 pl-10 pr-4 rounded-xl border border-surface-container-high bg-card focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none" placeholder="vous@email.com" />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-on-surface">Téléphone</label>
+              <div className="relative mt-1">
+                <Phone size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+                <input name="phoneNumber" type="tel" value={form.phoneNumber} onChange={handleChange} className="w-full h-11 pl-10 pr-4 rounded-xl border border-surface-container-high bg-card focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none" placeholder="2376XXXXXXXX" />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-on-surface">Mot de passe</label>
+              <div className="relative mt-1">
+                <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+                <input name="password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={handleChange} className="w-full h-11 pl-10 pr-10 rounded-xl border border-surface-container-high bg-card focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none" placeholder="••••••••" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              En créant un compte, vous acceptez nos{' '}
-              <Link href="#" className="text-primary hover:underline">conditions d&apos;utilisation</Link>{' '}
-              et notre{' '}
-              <Link href="#" className="text-primary hover:underline">politique de confidentialité</Link>.
-            </p>
-
-            <Button type="submit" size="lg" className="w-full" isLoading={isLoading}>
-              Créer mon compte <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
+            <button type="submit" disabled={loginMutation.isPending} className="w-full h-12 rounded-xl bg-brand-primary text-white font-bold hover:bg-brand-hover disabled:opacity-50 transition-all mt-2">
+              {loginMutation.isPending ? 'Création en cours...' : 'Créer mon compte'}
+            </button>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground">
-            Déjà un compte ?{' '}
-            <Link href="/login" className="font-medium text-primary hover:text-primary/80 transition-colors">Se connecter</Link>
-          </p>
+          <div className="mt-6 text-center text-sm text-on-surface-variant">
+            Déjà inscrit ?{' '}
+            <Link href="/login" className="font-semibold text-brand-primary hover:underline">
+              Se connecter <ArrowRight size={14} className="inline" />
+            </Link>
+          </div>
         </motion.div>
       </div>
     </div>
