@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { EscrowService } from '../financial/escrow.service';
 import { InvoicesService } from '../financial/invoices.service';
+import { ChatService } from '../chat/chat.service';
 import { CreateQuoteDto, UpdateQuoteStatusDto } from './dto/quotes.dto';
 import { QuoteStatus, JobStatus } from '@prisma/client';
 
@@ -11,6 +12,7 @@ export class QuotesService {
     private readonly prisma: PrismaService,
     private readonly escrowService: EscrowService,
     private readonly invoicesService: InvoicesService,
+    private readonly chatService: ChatService,
   ) {}
 
   async createQuote(artisanId: string, dto: CreateQuoteDto) {
@@ -63,9 +65,10 @@ export class QuotesService {
         data: { status: JobStatus.QUOTE_ACCEPTED },
       });
 
-      // 2. Initialiser le séquestre (Escrow) avec le prix total estimé
-      // Le total sera sous-total + taxes + fees, mais on utilise invoice pour l'instant, ou on calcule dynamiquement.
-      // Dans cette V1, l'invoice génère les totaux exacts.
+      // 2. Créer ou récupérer la ChatRoom associée au Job
+      await this.chatService.getOrCreateChatRoom(quote.jobId);
+
+      // 3. Initialiser le séquestre (Escrow) avec le prix total estimé
       const invoice = await this.invoicesService.generateInvoiceFromQuote(quoteId);
 
       // Le client devra payer totalAmount pour funder l'Escrow
