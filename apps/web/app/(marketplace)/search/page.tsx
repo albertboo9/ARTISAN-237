@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, SlidersHorizontal, Loader2, Sparkles, ArrowLeft } from 'lucide-react';
+import { Search, Loader2, Sparkles, ArrowLeft } from 'lucide-react';
 import { ArtisanCard } from '../../components/artisan/ArtisanCard';
 import { EmptyState } from '../../components/ui/EmptyState';
 import Button from '../../components/ui/button';
@@ -13,8 +13,6 @@ import 'leaflet/dist/leaflet.css';
 
 const MapContainer = dynamic(() => import('react-leaflet').then((m) => m.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import('react-leaflet').then((m) => m.TileLayer), { ssr: false });
-const Marker = dynamic(() => import('react-leaflet').then((m) => m.Marker), { ssr: false });
-const Popup = dynamic(() => import('react-leaflet').then((m) => m.Popup), { ssr: false });
 
 const DOUALA: [number, number] = [4.0511, 9.7085];
 
@@ -27,19 +25,14 @@ export default function SearchPage() {
   const serviceId = params.get('serviceId') || undefined;
   const repere = params.get('repere') || 'Douala Centre';
 
-  const { data, isLoading, isError } = useSearchArtisans({
-    serviceId,
-    repere,
-  });
+  const { data, isLoading, isError } = useSearchArtisans({ serviceId, repere });
 
   const artisans = data?.artisans || [];
   const iaUsed = data?.ia_used ?? false;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +45,6 @@ export default function SearchPage() {
 
   return (
     <div className="flex flex-col md:flex-row h-screen pt-16 bg-brand-bg overflow-hidden">
-
       {/* COLONNE GAUCHE (Liste) */}
       <div className="w-full md:w-1/2 lg:w-[45%] h-full flex flex-col border-r border-surface-container-high/50 bg-card relative z-10">
         <div className="p-4 md:p-6 border-b border-surface-container-high/50 bg-card sticky top-0 z-20">
@@ -92,41 +84,23 @@ export default function SearchPage() {
         <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
           <AnimatePresence mode="wait">
             {isLoading ? (
-              // Shimmer Effect Skeletons
               [1, 2, 3].map((i) => (
                 <motion.div key={`skel-${i}`} exit={{ opacity: 0 }} className="animate-pulse flex gap-4 p-5 bg-card rounded-2xl border border-surface-container-high h-36">
-                  <div className="w-16 h-16 bg-surface-container rounded-full shrink-0"></div>
+                  <div className="w-16 h-16 bg-surface-container rounded-full shrink-0" />
                   <div className="flex-1 space-y-3 py-1">
-                    <div className="h-4 bg-surface-container rounded w-1/3"></div>
-                    <div className="h-3 bg-surface-container rounded w-1/4"></div>
-                    <div className="h-3 bg-surface-container rounded w-full mt-4"></div>
+                    <div className="h-4 bg-surface-container rounded w-1/3" />
+                    <div className="h-3 bg-surface-container rounded w-1/4" />
+                    <div className="h-3 bg-surface-container rounded w-full mt-4" />
                   </div>
                 </motion.div>
               ))
             ) : isError ? (
-              <EmptyState
-                icon="alert"
-                title="Erreur de recherche"
-                description="Impossible de contacter notre IA. Veuillez réessayer."
-                actionLabel="Réessayer"
-                onAction={() => window.location.reload()}
-              />
+              <EmptyState icon="alert" title="Erreur de recherche" description="Impossible de contacter notre IA. Veuillez réessayer." actionLabel="Réessayer" onAction={() => window.location.reload()} />
             ) : artisans.length === 0 ? (
-              <EmptyState
-                icon="search"
-                title="Aucun artisan trouvé"
-                description={`Nous n'avons pas trouvé d'artisan correspondant à "${search || serviceId}" à ${repere}. Essayez un autre quartier ou métier.`}
-                actionLabel="Voir tous les artisans"
-                onAction={() => router.push('/search?repere=Douala Centre')}
-              />
+              <EmptyState icon="search" title="Aucun artisan trouvé" description={`Nous n'avons pas trouvé d'artisan correspondant à "${search || serviceId}" à ${repere}.`} actionLabel="Voir tous les artisans" onAction={() => router.push('/search?repere=Douala Centre')} />
             ) : (
               artisans.map((artisan, index) => (
-                <motion.div
-                  key={artisan.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.08 }}
-                >
+                <motion.div key={artisan.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: index * 0.08 }}>
                   <ArtisanCard
                     id={artisan.id}
                     name={`${artisan.firstName} ${artisan.lastName}`}
@@ -157,45 +131,9 @@ export default function SearchPage() {
           </div>
         )}
         <MapContainer center={DOUALA} zoom={13} className="h-full w-full" ref={mapRef}>
-          <TileLayer
-            attribution='&copy; OpenStreetMap'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {!isLoading && artisans.map((a) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let icon: any = undefined;
-            if (typeof window !== 'undefined') {
-              // eslint-disable-next-line @typescript-eslint/no-var-requires
-              const L = require('leaflet');
-              const html = `
-                <div class="relative flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-white shadow-[0_4px_12px_rgba(0,0,0,0.15)] bg-brand-primary text-white font-bold overflow-hidden">
-                  ${(a.firstName || 'A')[0]}
-                  <div class="absolute -bottom-1 -right-1 h-3.5 w-3.5 bg-green-500 rounded-full border-2 border-white"></div>
-                </div>
-              `;
-              icon = L.divIcon({ html, className: 'custom-leaflet-marker', iconSize: [40, 40], iconAnchor: [20, 40] });
-            }
-            return (
-              <Marker key={a.id} position={[a.lat || DOUALA[0], a.lng || DOUALA[1]]} icon={icon}>
-                <Popup>
-                  <div className="p-1 min-w-[160px] font-sans">
-                    <h3 className="font-semibold text-sm mb-1">{a.firstName} {a.lastName}</h3>
-                    <p className="text-xs font-medium text-brand-primary">{a.skills?.[0]?.serviceName || 'Artisan'}</p>
-                    <div className="flex items-center gap-2 mt-2 text-xs font-medium">
-                      <span className="text-brand-ai bg-brand-ai/10 px-1.5 py-0.5 rounded">Match {a.aiScore || Math.round((a.rating || 0) * 20)}%</span>
-                      <span>⭐ {a.rating?.toFixed(1)}</span>
-                    </div>
-                    {a.distance !== null && a.distance !== undefined && (
-                      <p className="text-xs text-on-surface-variant mt-1">📍 à {a.distance.toFixed(1)} km</p>
-                    )}
-                  </div>
-                </Popup>
-              </Marker>
-            );
-          })}
+          <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         </MapContainer>
       </div>
-
     </div>
   );
 }
