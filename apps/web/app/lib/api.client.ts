@@ -1,6 +1,9 @@
 /**
  * ARTISAN-237 — API Client
- * Instance Axios centralisée avec intercepteurs JWT et refresh automatique.
+ * Instance Axios centralisée avec intercepteur JWT.
+ * 
+ * PAS d'intercepteur 401 — il causait des boucles de redirection.
+ * Les erreurs 401 sont gérées au niveau des composants/hooks.
  */
 
 import axios from 'axios';
@@ -23,30 +26,5 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
-
-// Intercepteur Réponse : refresh automatique si 401
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const original = error.config;
-    if (error.response?.status === 401 && !original._retry) {
-      original._retry = true;
-      try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) throw new Error('No refresh token');
-        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
-        localStorage.setItem('accessToken', data.accessToken);
-        original.headers.Authorization = `Bearer ${data.accessToken}`;
-        return apiClient(original);
-      } catch {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        if (typeof window !== 'undefined') window.location.href = '/login';
-        return Promise.reject(error);
-      }
-    }
-    return Promise.reject(error);
-  }
-);
 
 export default apiClient;

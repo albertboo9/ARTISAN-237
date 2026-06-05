@@ -165,7 +165,7 @@ export class AuthService {
         "Réinitialisation de mot de passe — Artisan237",
         `
         <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #e0e0e0; border-radius: 12px;">
-          <h1 style="color: #4F46E5;">🔐 Réinitialisation de mot de passe</h1>
+          <h1 style="color: #4F46E5;"> Réinitialisation de mot de passe</h1>
           <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
           <p>Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe :</p>
           <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">
