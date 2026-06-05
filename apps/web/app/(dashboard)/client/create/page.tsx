@@ -9,7 +9,8 @@ import Button from '../../../components/ui/button';
 import Input from '../../../components/ui/input';
 import { cn } from '../../../lib/cn';
 import { showSuccessToast, showErrorToast } from '../../../lib/error-handler';
-import { apiClient } from '../../../lib/api-client';
+import apiClient from '../../../lib/api.client';
+import axios from 'axios';
 
 const steps = ['Service', 'Localisation', 'Description', 'Confirmation'];
 
@@ -28,8 +29,12 @@ export default function CreateMissionPage() {
   useEffect(() => {
     async function loadServices() {
       try {
-        const data = await apiClient<any>('/services', { skipAuth: true });
-        setServices(data || []);
+        const { data } = await axios.get('/services', {
+          baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1',
+        });
+        // Le TransformInterceptor enveloppe dans { success, data, meta }
+        const servicesList = data?.data ?? data;
+        setServices(Array.isArray(servicesList) ? servicesList : []);
       } catch (err) {
         showErrorToast('Impossible de charger les services');
       } finally {
@@ -52,15 +57,14 @@ export default function CreateMissionPage() {
     
     setIsLoading(true);
     try {
-      await apiClient('/jobs', {
-        method: 'POST',
-        body: JSON.stringify({
-          serviceId: selectedService,
-          description: description,
-          address: address,
-          lat: position.lat,
-          lng: position.lng,
-        }),
+      await axios.post('/jobs', {
+        serviceId: selectedService,
+        description,
+        address,
+        lat: position.lat,
+        lng: position.lng,
+      }, {
+        baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1',
       });
       showSuccessToast('Mission créée avec succès !');
       router.push('/client/missions');
