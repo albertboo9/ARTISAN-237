@@ -29,20 +29,34 @@ export default function LoginPage() {
       { email, password },
       {
         onSuccess: () => {
-          toast.success("Connexion réussie !");
-          // Récupérer le rôle depuis le profil chargé par le hook
           const token = localStorage.getItem('accessToken');
-          if (token) {
-            try {
-              const payload = JSON.parse(atob(token.split('.')[1]));
-              const role = payload?.role;
-              if (role === "ARTISAN") router.push("/artisan");
-              else if (role === "ADMIN") router.push("/admin");
-              else router.push("/client");
-              return;
-            } catch { /* fallback */ }
+          if (!token) {
+            toast.error("Erreur : token non reçu.");
+            return;
           }
-          router.push("/client");
+          try {
+            // Décoder le payload JWT (base64url → base64)
+            const parts = token.split('.');
+            if (parts.length !== 3) throw new Error('Token invalide');
+            const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+            const role = payload?.role;
+            
+            if (!role) {
+              toast.error("Token invalide : rôle non trouvé.");
+              return;
+            }
+
+            toast.success("Connexion réussie !");
+            if (role === "ARTISAN") router.push("/artisan");
+            else if (role === "ADMIN") router.push("/admin");
+            else router.push("/client");
+          } catch {
+            // Token corrompu → pas de redirection
+            localStorage.removeItem('accessToken');
+            document.cookie = 'session=; path=/; max-age=0';
+            setError("Erreur lors de la connexion. Veuillez réessayer.");
+            toast.error("Erreur : token invalide. Contactez le support.");
+          }
         },
         onError: (err) => {
           const msg = err.message === "Invalid credentials" 
