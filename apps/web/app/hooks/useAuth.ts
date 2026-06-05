@@ -1,10 +1,15 @@
 /**
  * ARTISAN-237 — Hook : Authentification
  * Connexion au backend NestJS : login, register, logout, profil.
+ * Utilise axios DIRECTEMENT (pas apiClient) pour éviter l'intercepteur 401
+ * qui redirigerait vers /login en cas d'échec.
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import apiClient from '../lib/api.client';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
 // ── Types ──────────────────────────────────────────────
 export interface LoginPayload {
@@ -35,12 +40,14 @@ export interface AuthResponse {
   };
 }
 
-// ── Login ──────────────────────────────────────────────
+// ── Login (sans intercepteur !) ────────────────────────
 export function useLogin() {
   const queryClient = useQueryClient();
   return useMutation<AuthResponse, Error, LoginPayload>({
     mutationFn: async (payload) => {
-      const { data } = await apiClient.post('/auth/login', payload);
+      const { data } = await axios.post<AuthResponse>(`${API_URL}/auth/login`, payload, {
+        headers: { 'Content-Type': 'application/json' },
+      });
       return data;
     },
     onSuccess: (data) => {
@@ -56,7 +63,9 @@ export function useRegister() {
   const queryClient = useQueryClient();
   return useMutation<AuthResponse, Error, RegisterPayload>({
     mutationFn: async (payload) => {
-      const { data } = await apiClient.post('/auth/register', payload);
+      const { data } = await axios.post<AuthResponse>(`${API_URL}/auth/register`, payload, {
+        headers: { 'Content-Type': 'application/json' },
+      });
       return data;
     },
     onSuccess: (data) => {
