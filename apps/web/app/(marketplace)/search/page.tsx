@@ -3,10 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
-import { Search, SlidersHorizontal, MapPin, Loader2, Sparkles } from 'lucide-react';
+import { Search, SlidersHorizontal, Loader2, Sparkles } from 'lucide-react';
 import { ArtisanCard } from '../../components/artisan/ArtisanCard';
 import Button from '../../components/ui/button';
-import { cn } from '../../lib/cn';
 import 'leaflet/dist/leaflet.css';
 
 // Lazy load Leaflet components
@@ -67,11 +66,13 @@ export default function SearchPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       import('leaflet').then((L) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         delete (L.Icon.Default.prototype as any)._getIconUrl;
         L.Icon.Default.mergeOptions({
           iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -160,8 +161,10 @@ export default function SearchPage() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           {!isLoading && MOCK_ARTISANS.map((a) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             let icon: any = undefined;
             if (typeof window !== 'undefined') {
+              // eslint-disable-next-line @typescript-eslint/no-var-requires
               const L = require('leaflet');
               const html = `
                 <div class="relative flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-white shadow-[0_4px_12px_rgba(0,0,0,0.15)] bg-brand-primary text-white font-bold overflow-hidden transition-transform hover:scale-110 hover:-translate-y-1">
