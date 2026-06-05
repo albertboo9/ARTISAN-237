@@ -53,9 +53,8 @@ export function useLogin() {
     onSuccess: (data) => {
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
-      // Cookie pour le middleware Next.js (Edge Runtime)
-      document.cookie = `accessToken=${data.accessToken}; path=/; max-age=900; SameSite=Lax`;
-      document.cookie = `refreshToken=${data.refreshToken}; path=/; max-age=604800; SameSite=Lax`;
+      // Cookie de session simple (pas le JWT, pour éviter la corruption)
+      document.cookie = 'session=active; path=/; max-age=900; SameSite=Lax';
       queryClient.setQueryData(['auth', 'me'], data.user);
     },
   });
