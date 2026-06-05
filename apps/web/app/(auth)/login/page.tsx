@@ -28,12 +28,21 @@ export default function LoginPage() {
     loginMutation.mutate(
       { email, password },
       {
-        onSuccess: (data) => {
-          toast.success(`Connexion réussie !`);
-          const role = data.user?.role;
-          if (role === "ARTISAN") router.push("/artisan");
-          else if (role === "ADMIN") router.push("/admin");
-          else router.push("/client");
+        onSuccess: () => {
+          toast.success("Connexion réussie !");
+          // Récupérer le rôle depuis le profil chargé par le hook
+          const token = localStorage.getItem('accessToken');
+          if (token) {
+            try {
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              const role = payload?.role;
+              if (role === "ARTISAN") router.push("/artisan");
+              else if (role === "ADMIN") router.push("/admin");
+              else router.push("/client");
+              return;
+            } catch { /* fallback */ }
+          }
+          router.push("/client");
         },
         onError: (err) => {
           const msg = err.message === "Invalid credentials" 

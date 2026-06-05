@@ -26,6 +26,10 @@ export interface RegisterPayload {
   role: 'CLIENT' | 'ARTISAN';
 }
 
+export interface LoginResponse {
+  accessToken: string;
+}
+
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
@@ -43,19 +47,26 @@ export interface AuthResponse {
 // ── Login (sans intercepteur !) ────────────────────────
 export function useLogin() {
   const queryClient = useQueryClient();
-  return useMutation<AuthResponse, Error, LoginPayload>({
+  return useMutation<LoginResponse, Error, LoginPayload>({
     mutationFn: async (payload) => {
-      const { data } = await axios.post<AuthResponse>(`${API_URL}/auth/login`, payload, {
+      const { data } = await axios.post<LoginResponse>(`${API_URL}/auth/login`, payload, {
         headers: { 'Content-Type': 'application/json' },
       });
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
-      // Cookie de session simple (pas le JWT, pour éviter la corruption)
+      // Cookie de session simple
       document.cookie = 'session=active; path=/; max-age=900; SameSite=Lax';
-      queryClient.setQueryData(['auth', 'me'], data.user);
+      // Récupérer le profil utilisateur
+      try {
+        const meRes = await axios.get(`${API_URL}/users/me`, {
+          headers: { Authorization: `Bearer ${data.accessToken}` },
+        });
+        queryClient.setQueryData(['auth', 'me'], meRes.data);
+      } catch {
+        // Le profil sera chargé par le hook useMe()
+      }
     },
   });
 }
