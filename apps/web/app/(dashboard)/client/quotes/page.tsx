@@ -20,8 +20,9 @@ export default function QuotesPage() {
     async function fetchQuotes() {
       try {
         const { data } = await apiClient.get('/quotes?status=PENDING,ACCEPTED,REJECTED');
-        const body = unwrap(data);
-        setQuotes(Array.isArray(body) ? body : body?.data || []);
+        const raw = data?.data ?? data;
+        const list = raw?.data ?? raw;
+        setQuotes(Array.isArray(list) ? list : []);
       } catch (err) {
         showErrorToast('Erreur lors du chargement des devis');
       } finally {
@@ -37,7 +38,9 @@ export default function QuotesPage() {
       await apiClient.patch(`/quotes/${quoteId}/status`, { status: 'ACCEPTED' });
       showSuccessToast('Devis accepté !');
       const { data } = await apiClient.get('/quotes?status=PENDING,ACCEPTED,REJECTED');
-      setQuotes(Array.isArray(unwrap(data)) ? unwrap(data) : []);
+      const raw = data?.data ?? data;
+      const list = raw?.data ?? raw;
+      setQuotes(Array.isArray(list) ? list : []);
     } catch (err) {
       showErrorToast('Erreur lors de l\'acceptation du devis');
     } finally {

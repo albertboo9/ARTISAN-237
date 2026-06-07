@@ -27,7 +27,8 @@ export default function ClientMessagesPage() {
       try {
         // Fetch jobs for the client
         const { data: raw } = await apiClient.get(`/jobs?clientId=${user.id}`);
-        const jobsList = raw?.data ?? raw ?? [];
+        const parsed = raw?.data ?? raw;
+        const jobsList = parsed?.data ?? parsed ?? [];
         
         // Only show jobs that have an accepted quote (thus an artisan)
         const activeJobs = jobsList

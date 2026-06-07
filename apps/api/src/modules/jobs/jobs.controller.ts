@@ -11,6 +11,7 @@ import {
 } from "@nestjs/common";
 import { JobsService } from "./jobs.service";
 import { CreateJobDto, UpdateJobStatusDto } from "./dto/jobs.dto";
+import { AutoDetectServiceDto } from "./dto/jobs-auto-detect.dto";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from "@nestjs/swagger";
@@ -21,6 +22,12 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from "@nestjs/swagger"
 @Controller("jobs")
 export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
+
+  @ApiOperation({ summary: "Auto-detect service from description" })
+  @Post("auto-detect")
+  async autoDetectService(@Body() dto: AutoDetectServiceDto) {
+    return this.jobsService.autoDetectService(dto.description);
+  }
 
   @ApiOperation({ summary: "Create a new job request" })
   @Post()

@@ -23,7 +23,8 @@ export default function MissionsPage() {
   useEffect(() => {
     apiClient.get('/jobs')
       .then(({ data }) => {
-        const list = data?.data || data || [];
+        const raw = data?.data ?? data;
+        const list = raw?.data ?? raw;
         setMissions(Array.isArray(list) ? list : []);
       })
       .catch(() => {})

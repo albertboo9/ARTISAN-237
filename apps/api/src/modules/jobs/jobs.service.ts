@@ -179,6 +179,55 @@ export class JobsService {
     });
   }
 
+  async autoDetectService(description: string) {
+    const services = await this.prisma.service.findMany({
+      include: { category: true },
+    });
+
+    if (services.length === 0) return null;
+
+    const lower = description.toLowerCase();
+    
+    // Mapping de mots-clés vers les services
+    const keywordMap: Record<string, string[]> = {
+      'plombier': ['fuite', 'eau', 'plomberie', 'chauffe-eau', 'robinet', 'canalisation', 'tuyau', 'wc', 'évier', 'douche', 'baignoire'],
+      'électricien': ['électricité', 'prise', 'disjoncteur', 'câble', 'court-circuit', 'panne électrique', 'installation électrique', 'tableau'],
+      'menuisier': ['menuiserie', 'meuble', 'porte', 'fenêtre', 'bois', 'placard', 'étagère'],
+      'peintre': ['peinture', 'peintre', 'mur', 'plafond', 'enduit'],
+      'frigoriste': ['climatisation', 'climatiseur', 'froid', 'réfrigérateur', 'split'],
+      'mécanicien': ['mécanique', 'voiture', 'moteur', 'réparation auto'],
+      'jardinier': ['jardinage', 'jardin', 'plante', 'pelouse', 'taille'],
+      'ménage': ['ménage', 'nettoyage', 'propre'],
+    };
+
+    let bestService = services[0];
+    let bestScore = 0;
+
+    for (const service of services) {
+      let score = 0;
+      const serviceLower = service.name.toLowerCase();
+      
+      // Vérifier les mots-clés pour ce service
+      for (const [category, keywords] of Object.entries(keywordMap)) {
+        if (serviceLower.includes(category) || service.category?.name?.toLowerCase().includes(category)) {
+          for (const kw of keywords) {
+            if (lower.includes(kw)) score += 3;
+          }
+        }
+      }
+      
+      // Bonus si le nom du service est dans la description
+      if (lower.includes(serviceLower)) score += 5;
+      
+      if (score > bestScore) {
+        bestScore = score;
+        bestService = service;
+      }
+    }
+
+    return { service: bestService, confidence: bestScore > 0 ? Math.min(bestScore * 10, 100) : 30 };
+  }
+
   async getAiMatchesForJob(jobId: string) {
     const job = await this.prisma.job.findUnique({
       where: { id: jobId },
