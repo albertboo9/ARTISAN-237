@@ -1,0 +1,66 @@
+{
+  "model": "XGBoost Classifier",
+  "version": "2.0",
+  "features": {
+    "categorical": [
+      "client_quartier",
+      "artisan_specialite",
+      "artisan_quartier",
+      "urgence"
+    ],
+    "numeric": [
+      "distance_km",
+      "artisan_note",
+      "artisan_jobs",
+      "artisan_response_time",
+      "anciennete_jours",
+      "budget_estime"
+    ],
+    "binary": [
+      "artisan_premium",
+      "artisan_available"
+    ],
+    "text": [
+      "client_description"
+    ]
+  },
+  "dataset_size": 500000,
+  "train_size": 400000,
+  "val_size": 50000,
+  "test_size": 50000,
+  "hyperparameters": {
+    "n_estimators": 200,
+    "max_depth": 8,
+    "learning_rate": 0.05
+  },
+  "metrics": {
+    "train": {
+      "dataset": "train",
+      "accuracy": 0.6531,
+      "roc_auc": 0.6886,
+      "f1_score": 0.757,
+      "precision": 0.6576,
+      "recall": 0.8917,
+      "n_samples": 400000
+    },
+    "val": {
+      "dataset": "val",
+      "accuracy": 0.6264,
+      "roc_auc": 0.6319,
+      "f1_score": 0.7384,
+      "precision": 0.6412,
+      "recall": 0.8705,
+      "n_samples": 50000
+    },
+    "test": {
+      "dataset": "test",
+      "accuracy": 0.6261,
+      "roc_auc": 0.6348,
+      "f1_score": 0.7385,
+      "precision": 0.6407,
+      "recall": 0.8716,
+      "n_samples": 50000
+    }
+  },
+  "trained_at": "2026-06-07T06:23:19.823537"
+}

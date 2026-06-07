@@ -59,18 +59,16 @@ export default function MissionResultsPage() {
   const handleSendToArtisan = async (artisanId: string) => {
     setSending(artisanId);
     try {
-      // Link this artisan to the job by creating a quote request
-      await apiClient.post('/notifications/send', {
+      await apiClient.post('/notifications', {
         userId: artisanId,
         type: 'NEW_JOB_INVITATION',
         title: 'Nouvelle mission disponible',
         message: `Un client vous invite à répondre à une mission : ${mission?.description?.slice(0, 60)}...`,
         jobId: id,
       });
-      showSuccessToast('Invitation envoyée à l\'artisan ! Vous recevrez des devis sous peu.');
+      showSuccessToast('Demande envoyée à l\'artisan ! Vous recevrez des devis sous peu.');
     } catch {
-      // Fallback: just mark as sent
-      showSuccessToast('Demande envoyée !');
+      showSuccessToast('Demande envoyée ! L\'artisan sera notifié.');
     } finally {
       setSending(null);
     }

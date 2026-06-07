@@ -76,16 +76,11 @@ app.include_router(router)
 
 @app.get("/", tags=["Diagnostic"])
 def root():
-    """
-    Vérifie l'état du serveur et liste les métiers/repères reconnus par le modèle.
-    """
     return {
         "status": "online",
         "service": "ARTISAN237 AI Engine",
         "model_loaded": prediction_service.is_loaded,
-        "model_version": "1.0.0",
-        "metiers_autorises": prediction_service.metiers_autorises,
-        "reperes_autorises": prediction_service.reperes_autorises,
+        "model_version": "2.0.0 (XGBoost)",
     }
 
 

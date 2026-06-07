@@ -1,163 +1,68 @@
 """
-ARTISAN-237 — Router API
-=========================
-Définition des endpoints : /predict, /recommend, /explain
+ARTISAN-237 — Router API v2.0 (XGBoost)
+========================================
+Endpoints : /recommend (batch prediction)
 """
 
+import time
 import logging
 from fastapi import APIRouter, HTTPException
 
 from app.models.schemas import (
-    PredictRequest,
-    PredictResponse,
     RecommendRequest,
     RecommendResponse,
     ArtisanResult,
-    ExplainRequest,
-    ExplainResponse,
 )
 from app.services.prediction_service import prediction_service
-from app.services.explainability import generate_explanation
 
 logger = logging.getLogger("artisan237.api")
 
 router = APIRouter()
 
 
-# ──────────────────────────────────────────────────
-# POST /predict — Prédiction unitaire
-# ──────────────────────────────────────────────────
-
-@router.post("/predict", response_model=PredictResponse, tags=["Prédiction"])
-def predict_single(data: PredictRequest):
-    """
-    Calcule le score de compatibilité entre UN client et UN artisan spécifique.
-    Idéal pour afficher un badge de score sur le profil d'un artisan.
-    """
-    if not prediction_service.is_loaded:
-        raise HTTPException(status_code=503, detail="Modèle non chargé.")
-
-    if not prediction_service.is_valid_metier(data.metier_recherche):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Métier '{data.metier_recherche}' non répertorié. "
-                   f"Métiers valides : {prediction_service.metiers_autorises}"
-        )
-    if not prediction_service.is_valid_repere(data.repere_client):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Repère client '{data.repere_client}' non répertorié."
-        )
-    if not prediction_service.is_valid_repere(data.repere_artisan):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Repère artisan '{data.repere_artisan}' non répertorié."
-        )
-
-    try:
-        score = prediction_service.predict_single(
-            metier_recherche=data.metier_recherche,
-            repere_client=data.repere_client,
-            repere_artisan=data.repere_artisan,
-            note_moyenne=data.note_moyenne,
-            nb_avis=data.nb_avis,
-            xp_point=data.xp_point,
-            niveau=data.niveau,
-            temps_reponse_moyen_min=data.temps_reponse_moyen_min,
-        )
-
-        return PredictResponse(
-            statut="succès",
-            metier=data.metier_recherche,
-            score_compatibilite=score,
-        )
-    except Exception as e:
-        logger.error(f"Erreur de prédiction unitaire : {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur interne : {str(e)}")
-
-
-# ──────────────────────────────────────────────────
-# POST /recommend — Recommandation par lots
-# ──────────────────────────────────────────────────
-
 @router.post("/recommend", response_model=RecommendResponse, tags=["Recommandation"])
 def recommend_artisans(data: RecommendRequest):
     """
-    Prend le besoin d'un client et une liste d'artisans,
-    calcule tous les scores, et renvoie la liste triée par pertinence IA.
+    Prend le besoin du client et une liste d'artisans disponibles,
+    calcule les probabilités de succès avec XGBoost,
+    et renvoie la liste triée par pertinence IA.
     """
     if not prediction_service.is_loaded:
         raise HTTPException(status_code=503, detail="Modèle non chargé.")
 
-    if not prediction_service.is_valid_metier(data.metier_recherche):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Métier '{data.metier_recherche}' non répertorié."
-        )
-    if not prediction_service.is_valid_repere(data.repere_client):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Repère client '{data.repere_client}' non répertorié."
-        )
-
-    if not data.liste_artisans_disponibles:
+    if not data.available_artisans:
         return RecommendResponse(statut="succès", total_evalues=0, resultats=[])
 
-    resultats = []
-    for art in data.liste_artisans_disponibles:
-        # Si le repère artisan n'est pas connu, on utilise le repère client (fallback)
-        repere = art.repere_artisan if prediction_service.is_valid_repere(art.repere_artisan) else data.repere_client
+    start_time = time.time()
 
-        try:
-            score = prediction_service.predict_single(
-                metier_recherche=data.metier_recherche,
-                repere_client=data.repere_client,
-                repere_artisan=repere,
-                note_moyenne=art.note_moyenne,
-                nb_avis=art.nb_avis,
-                xp_point=art.xp_point,
-                niveau=art.niveau,
-                temps_reponse_moyen_min=art.temps_reponse_moyen_min,
-            )
-        except Exception:
-            score = 50.0  # Fallback neutre en cas d'erreur
+    artisans_list = [a.model_dump() for a in data.available_artisans]
+    client_req = data.client_request.model_dump()
 
-        resultats.append(ArtisanResult(
-            id_artisan=art.id_artisan,
-            nom=art.nom,
-            metier=data.metier_recherche,
-            repere_artisan=art.repere_artisan,
-            note_moyenne=art.note_moyenne,
-            score_compatibilite=score,
-        ))
+    results_list = prediction_service.predict_batch(client_req, artisans_list)
 
-    # Tri décroissant par score (le meilleur en premier)
-    resultats.sort(key=lambda x: x.score_compatibilite, reverse=True)
+    resultats = [
+        ArtisanResult(
+            artisan_id=r["artisan_id"],
+            match_probability=r["match_probability"],
+            score=r["score"],
+            rank=i + 1,
+        )
+        for i, r in enumerate(results_list)
+    ]
+
+    elapsed_ms = (time.time() - start_time) * 1000
 
     return RecommendResponse(
         statut="succès",
         total_evalues=len(resultats),
         resultats=resultats,
+        processing_time_ms=round(elapsed_ms, 1),
     )
 
 
-# ──────────────────────────────────────────────────
-# POST /explain — Explicabilité IA (XAI)
-# ──────────────────────────────────────────────────
-
-@router.post("/explain", response_model=ExplainResponse, tags=["Explicabilité"])
-def explain_prediction(data: ExplainRequest):
-    """
-    Produit une explication en langage naturel cohérente avec les données d'entrée.
-    L'explication n'est jamais générique : elle dépend du profil de l'artisan.
-    """
-    result = generate_explanation(
-        artisan_profile=data.artisan_profile,
-        score=data.prediction,
-    )
-
-    return ExplainResponse(
-        score=result["score"],
-        reasons=result["reasons"],
-        human_text=result["human_text"],
-    )
+@router.get("/recommend/health", tags=["Santé"])
+def recommend_health():
+    return {
+        "model_loaded": prediction_service.is_loaded,
+        "model_version": "xgboost-v2.0",
+    }
