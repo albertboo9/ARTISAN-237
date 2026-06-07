@@ -186,38 +186,82 @@ export class JobsService {
 
     if (services.length === 0) return null;
 
-    const lower = description.toLowerCase();
+    const lower = description.toLowerCase().trim();
     
-    // Mapping de mots-clés vers les services
-    const keywordMap: Record<string, string[]> = {
-      'plombier': ['fuite', 'eau', 'plomberie', 'chauffe-eau', 'robinet', 'canalisation', 'tuyau', 'wc', 'évier', 'douche', 'baignoire'],
-      'électricien': ['électricité', 'prise', 'disjoncteur', 'câble', 'court-circuit', 'panne électrique', 'installation électrique', 'tableau'],
-      'menuisier': ['menuiserie', 'meuble', 'porte', 'fenêtre', 'bois', 'placard', 'étagère'],
-      'peintre': ['peinture', 'peintre', 'mur', 'plafond', 'enduit'],
-      'frigoriste': ['climatisation', 'climatiseur', 'froid', 'réfrigérateur', 'split'],
-      'mécanicien': ['mécanique', 'voiture', 'moteur', 'réparation auto'],
-      'jardinier': ['jardinage', 'jardin', 'plante', 'pelouse', 'taille'],
-      'ménage': ['ménage', 'nettoyage', 'propre'],
+    // Dictionnaire très riche de mots-clés par métier
+    const keywordMap: Record<string, { name: string; keywords: string[]; weight: number }> = {
+      'PLOMBIER': {
+        name: 'plomberie',
+        keywords: ['fuite', 'eau', 'plombier', 'chauffe-eau', 'robinet', 'canalisation', 'tuyau', 'wc', 'évier', 'douche', 'baignoire', 'salle de bain', 'évacuation', 'sanitaire', 'siphon', 'joint', 'débouchage', 'inondation', 'humidité', 'moisissure', 'cumulus', 'ballon', 'chaudière', 'colonne', 'regard', 'fosse septique', 'pompe', 'surpresseur'],
+        weight: 1.0
+      },
+      'ELECTRICIEN': {
+        name: 'électrique',
+        keywords: ['électricien', 'prise', 'disjoncteur', 'câble', 'court-circuit', 'panne', 'courant', 'électrique', 'installation électrique', 'tableau', 'compteur', 'linky', 'ampoule', 'lumière', 'spot', 'interrupteur', 'va-et-vient', 'domotique', 'parafoudre', 'terre', 'triphasé', 'monophasé', 'norme nf', 'consuel', 'gaine', 'fourreau', 'tableau électrique', 'disjoncte'],
+        weight: 1.0
+      },
+      'MENUISIER': {
+        name: 'menuiserie',
+        keywords: ['menuisier', 'meuble', 'porte', 'fenêtre', 'bois', 'placard', 'étagère', 'escalier', 'parquet', 'cuisine', 'dressing', 'bibliothèque', 'table', 'chaise', 'bureau', 'volet', 'persienne', 'store', 'moulure', 'plinthe', 'lambris', 'agencement', 'sur mesure'],
+        weight: 1.0
+      },
+      'PEINTRE': {
+        name: 'peinture',
+        keywords: ['peintre', 'peinture', 'enduit', 'mur', 'plafond', 'ponçage', 'sous-couche', 'glycéro', 'acrylique', 'laque', 'vernis', 'rouleau', 'pinceau', 'décoration', 'papier peint', 'toile de verre', 'crépi', 'ravalement', 'façade', 'travaux peinture', 'reboucher', 'lisser'],
+        weight: 1.0
+      },
+      'CLIMATISATION': {
+        name: 'froid',
+        keywords: ['climatisation', 'climatiseur', 'clim', 'froid', 'réfrigérateur', 'split', 'frigo', 'congélateur', 'chambre froide', 'ventilation', 'vrf', 'vrv', 'gainable', 'cassette', 'pompe à chaleur', 'pac', 'entretien clim'],
+        weight: 0.9
+      },
+      'MECANIQUE': {
+        name: 'mécanique',
+        keywords: ['mécanicien', 'voiture', 'moteur', 'réparation auto', 'vidange', 'garage', 'pneu', 'frein', 'embrayage', 'boîte', 'distribution', 'courroie', 'alternateur', 'démarreur', 'batterie', 'échappement', 'amortisseur', 'suspension', 'carrosserie'],
+        weight: 0.9
+      },
+      'JARDINAGE': {
+        name: 'jardinage',
+        keywords: ['jardinier', 'jardin', 'plante', 'pelouse', 'taille', 'haie', 'tondeuse', 'débroussailleuse', 'arbre', 'élagage', 'arrosage', 'potager', 'fleur', 'terreau', 'engrais', 'désherbage', 'paysagiste', 'aménagement extérieur', 'terrasse', 'gazon'],
+        weight: 0.9
+      },
+      'MENAGE': {
+        name: 'ménage',
+        keywords: ['ménage', 'nettoyage', 'propre', 'femme de ménage', 'repassage', 'lessive', 'poussière', 'vitre', 'aspirateur', 'serpillère', 'détergent', 'désinfection', 'entretien maison', 'aide ménagère', 'aide à domicile'],
+        weight: 0.85
+      },
+      'MAÇON': {
+        name: 'maçonnerie',
+        keywords: ['maçon', 'maçonnerie', 'construction', 'béton', 'ciment', 'parpaing', 'brique', 'fondation', 'dalle', 'mur porteur', 'clôture', 'terrassement', 'carrelage', 'pose carrelage', 'carreleur', 'faïence', 'salle de bain', 'rénovation', 'extension', 'véranda'],
+        weight: 1.0
+      },
     };
 
     let bestService = services[0];
-    let bestScore = 0;
+    let bestScore = -1;
 
     for (const service of services) {
       let score = 0;
       const serviceLower = service.name.toLowerCase();
+      const catLower = service.category?.name?.toLowerCase() || '';
       
-      // Vérifier les mots-clés pour ce service
-      for (const [category, keywords] of Object.entries(keywordMap)) {
-        if (serviceLower.includes(category) || service.category?.name?.toLowerCase().includes(category)) {
-          for (const kw of keywords) {
-            if (lower.includes(kw)) score += 3;
+      for (const [, mapping] of Object.entries(keywordMap)) {
+        // Si le service correspond à ce mapping
+        const matchesServiceName = serviceLower.includes(mapping.name) || catLower.includes(mapping.name);
+        if (matchesServiceName) {
+          for (const kw of mapping.keywords) {
+            if (lower.includes(kw)) {
+              score += 2;
+              // Bonus pour les mots-clés longs (plus spécifiques)
+              if (kw.length > 9) score += 2;
+            }
           }
+          // Bonus si le nom du service apparaît directement dans la description
+          if (lower.includes(serviceLower)) score += 10;
+          // Appliquer le poids
+          score = Math.round(score * mapping.weight);
         }
       }
-      
-      // Bonus si le nom du service est dans la description
-      if (lower.includes(serviceLower)) score += 5;
       
       if (score > bestScore) {
         bestScore = score;
@@ -225,7 +269,10 @@ export class JobsService {
       }
     }
 
-    return { service: bestService, confidence: bestScore > 0 ? Math.min(bestScore * 10, 100) : 30 };
+    // Calculer la confiance sur une échelle 30-98
+    const confidence = bestScore > 0 ? Math.min(30 + bestScore * 5, 98) : 25;
+
+    return { service: bestService, confidence, keywordsFound: bestScore };
   }
 
   async getAiMatchesForJob(jobId: string) {

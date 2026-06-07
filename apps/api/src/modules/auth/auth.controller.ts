@@ -37,7 +37,7 @@ export class AuthController {
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+    return this.authService.register({ ...dto, phoneNumber: dto.phoneNumber || '' });
   }
 
   @ApiOperation({ summary: 'Login', description: 'Authenticates user credentials and returns JWT tokens.' })

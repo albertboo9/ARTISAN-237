@@ -6,18 +6,20 @@ export class RegisterDto {
   email!: string;
 
   @IsString()
+  @MinLength(2)
   firstName!: string;
 
   @IsString()
+  @MinLength(2)
   lastName!: string;
 
   @IsString()
-  @IsNotEmpty()
+  @MinLength(6)
   password!: string;
 
   @IsString()
-  @IsNotEmpty()
-  phoneNumber!: string;
+  @IsOptional()
+  phoneNumber?: string;
 
   @IsEnum(Role)
   role!: Role;

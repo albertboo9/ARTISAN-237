@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, User, Phone, ShieldCheck, Sparkles } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, User, Phone, ShieldCheck, Sparkles, Briefcase, Wrench } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -16,6 +16,7 @@ export default function RegisterPage() {
     firstName: '',
     lastName: '',
     phoneNumber: '',
+    role: '' as 'CLIENT' | 'ARTISAN' | '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,15 +29,12 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
 
-    if (!form.email || !form.password || !form.firstName || !form.lastName || !form.phoneNumber) {
+    if (!form.email || !form.password || !form.firstName || !form.lastName || !form.phoneNumber || !form.role) {
       setError('Tous les champs sont obligatoires.');
       return;
     }
 
     try {
-      // Le backend détermine le rôle automatiquement.
-      // Si l'email contient "admin", l'inscription échouera (admin créé uniquement en seed).
-      // Sinon, le backend décide du rôle selon l'email ou d'autres critères métier.
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -46,7 +44,7 @@ export default function RegisterPage() {
           firstName: form.firstName,
           lastName: form.lastName,
           phoneNumber: form.phoneNumber,
-          // Aucun rôle envoyé — c'est le backend qui décide
+          role: form.role,
         }),
       });
 
@@ -145,6 +143,38 @@ export default function RegisterPage() {
                 <input name="password" type={showPassword ? 'text' : 'password'} value={form.password} onChange={handleChange} className="w-full h-11 pl-10 pr-10 rounded-xl border border-surface-container-high bg-card focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none" placeholder="••••••••" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant">
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-on-surface mb-2 block">Type de compte</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, role: 'CLIENT' })}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                    form.role === 'CLIENT'
+                      ? 'border-brand-primary bg-brand-primary/5 text-brand-primary'
+                      : 'border-surface-container-high bg-card text-on-surface-variant hover:border-brand-primary/40'
+                  }`}
+                >
+                  <Briefcase size={24} />
+                  <span className="text-sm font-semibold">Client</span>
+                  <span className="text-xs text-center leading-tight">Je recherche des artisans</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, role: 'ARTISAN' })}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                    form.role === 'ARTISAN'
+                      ? 'border-brand-primary bg-brand-primary/5 text-brand-primary'
+                      : 'border-surface-container-high bg-card text-on-surface-variant hover:border-brand-primary/40'
+                  }`}
+                >
+                  <Wrench size={24} />
+                  <span className="text-sm font-semibold">Artisan</span>
+                  <span className="text-xs text-center leading-tight">Je propose mes services</span>
                 </button>
               </div>
             </div>
