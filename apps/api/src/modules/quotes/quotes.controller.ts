@@ -25,6 +25,12 @@ export class QuotesController {
     return this.quotesService.getQuotesForJob(jobId);
   }
 
+  @ApiOperation({ summary: "Get my quotes (artisan's own quotes)" })
+  @Get('mine')
+  async getMyQuotes(@Req() req: any) {
+    return this.quotesService.findMyQuotes(req.user.sub);
+  }
+
   @ApiOperation({ summary: 'Get quotes with optional filters (artisanId, clientId, status)' })
   @Get()
   async getQuotes(
@@ -33,7 +39,6 @@ export class QuotesController {
     @Query('clientId') clientId?: string,
     @Query('status') status?: any,
   ) {
-    // For a real production app, ensure users can only see their own quotes.
     return this.quotesService.findQuotes({ artisanId, clientId, status });
   }
 

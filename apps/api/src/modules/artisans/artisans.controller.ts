@@ -136,6 +136,15 @@ export class ArtisansController {
     );
   }
 
+  @ApiOperation({ summary: "Get KYC verification status" })
+  @ApiBearerAuth()
+  @Roles(Role.ARTISAN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get("kyc/status")
+  async getKycStatus(@Req() req: any) {
+    return this.artisansService.getKycStatus(req.user.sub);
+  }
+
   @ApiOperation({ summary: "Initiate KYC Verification with Didit" })
   @ApiBearerAuth()
   @Roles(Role.ARTISAN)

@@ -19,7 +19,6 @@ export default function CreateMissionPage() {
   const [services, setServices] = useState<{ id: string; name: string; category: any }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingServices, setIsFetchingServices] = useState(true);
-  
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [position, setPosition] = useState({ lat: 4.0511, lng: 9.7085 });
   const [address, setAddress] = useState('Akwa, Douala');
@@ -54,15 +53,21 @@ export default function CreateMissionPage() {
     
     setIsLoading(true);
     try {
-      await apiClient.post('/jobs', {
+      const result = await apiClient.post('/jobs', {
         serviceId: selectedService,
         description,
         address,
         lat: position.lat,
         lng: position.lng,
       });
-      showSuccessToast('Mission créée avec succès !');
-      router.push('/client/missions');
+      showSuccessToast('Mission créée !');
+      const jobData = result.data?.data ?? result.data;
+      const jobId = jobData?.id;
+      if (jobId) {
+        router.push(`/client/results/${jobId}`);
+      } else {
+        router.push('/client/missions');
+      }
     } catch (err) {
       showErrorToast(err);
     } finally {

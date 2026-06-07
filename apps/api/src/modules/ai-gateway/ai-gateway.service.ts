@@ -9,11 +9,65 @@ export class AiGatewayService {
   private readonly logger = new Logger(AiGatewayService.name);
   private readonly aiServiceUrl: string;
 
+  private readonly metierMlMapping: Record<string, string> = {
+    // Mapping exact vers les métiers du modèle (sans accents, comme dans le dataset)
+    'installation électrique': 'lectricien',
+    'électricien': 'lectricien',
+    'electricité': 'lectricien',
+    'plomberie générale': 'Plombier',
+    'plomberie': 'Plombier',
+    'plombier': 'Plombier',
+    'menuiserie': 'Menuisier',
+    'menuisier': 'Menuisier',
+    'peinture': 'Peintre',
+    'peintre': 'Peintre',
+    'maçonnerie': 'Maon',
+    'maçon': 'Maon',
+    'froid': 'Frigoriste',
+    'climatisation': 'Frigoriste',
+    'mécanique': 'Mcanicien',
+    'réparation': 'Mcanicien',
+  };
+
+  private readonly repereMlMapping: Record<string, string> = {
+    'akwa': 'MTN Commercial Akwa',
+    'douala': 'Rond-point Deido',
+    'douala centre': 'Rond-point Deido',
+    'ndokoti': 'Carrefour Ndokoti',
+    'bonamoussadi': 'Total Bonamoussadi',
+    'bassa': 'Tradex Bassa',
+    'ndogbong': 'Tradex Ndogbong',
+    'logbaba': 'Total Logbaba',
+    'deido': 'Rond-point Deido',
+    'sandaga': 'March Sandaga',
+    'rail': 'Tradex Rail',
+  };
+
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {
     this.aiServiceUrl = this.configService.get<string>('AI_SERVICE_URL', 'http://localhost:8000');
+  }
+
+  /** Convertit un métier DB en métier ML */
+  private normalizeMetier(dbMetier: string | undefined): string {
+    if (!dbMetier) return 'Plombier';
+    const lower = dbMetier.toLowerCase().trim();
+    for (const [key, value] of Object.entries(this.metierMlMapping)) {
+      if (lower.includes(key) || key.includes(lower)) return value;
+    }
+    return 'Plombier';
+  }
+
+  /** Convertit un repère client en repère connu du modèle ML */
+  private normalizeRepere(dbRepere: string | undefined): string {
+    if (!dbRepere) return 'Rond-point Deido';
+    const lower = dbRepere.toLowerCase().trim();
+    for (const [key, value] of Object.entries(this.repereMlMapping)) {
+      if (lower.includes(key) || key.includes(lower)) return value;
+    }
+    return 'Rond-point Deido';
   }
 
   /**
@@ -24,13 +78,17 @@ export class AiGatewayService {
     const endpoint = `${this.aiServiceUrl}/recommend`;
     
     // Mapping vers le contrat FastAPI attendu par /recommend
+    const rawMetier = payload.available_artisans.length > 0 ? payload.available_artisans[0].specialty : "Plombier";
+    const metier_recherche = this.normalizeMetier(rawMetier);
+    // Normaliser le repère client (AKWA → MTN Commercial Akwa)
+    const repere_client = this.normalizeRepere(payload.client_request.quartier_code);
     const mlPayload = {
-      metier_recherche: payload.available_artisans.length > 0 ? payload.available_artisans[0].specialty : "Plombier",
-      repere_client: payload.client_request.quartier_code,
+      metier_recherche,
+      repere_client,
       liste_artisans_disponibles: payload.available_artisans.map(art => ({
         id_artisan: art.artisan_id,
         nom: `Artisan ${art.artisan_id}`, // Le nom n'impacte pas le score ML
-        repere_artisan: art.quartier_base,
+        repere_artisan: this.normalizeRepere(art.quartier_base),
         note_moyenne: art.rating,
         nb_avis: art.total_jobs,
         xp_point: art.total_jobs * 10, // Mock exp from jobs

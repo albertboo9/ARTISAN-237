@@ -51,27 +51,19 @@ export class QuotesService {
       throw new BadRequestException('Can only update status of PENDING quotes');
     }
 
-    // Mise à jour du Quote
     const updatedQuote = await this.prisma.quote.update({
       where: { id: quoteId },
       data: { status: dto.status },
     });
 
-    // Workflow d'acceptation de devis
     if (dto.status === QuoteStatus.ACCEPTED) {
-      // 1. Mettre à jour le Job -> QUOTE_ACCEPTED
       await this.prisma.job.update({
         where: { id: quote.jobId },
         data: { status: JobStatus.QUOTE_ACCEPTED },
       });
 
-      // 2. Créer ou récupérer la ChatRoom associée au Job
       await this.chatService.getOrCreateChatRoom(quote.jobId);
-
-      // 3. Initialiser le séquestre (Escrow) avec le prix total estimé
       const invoice = await this.invoicesService.generateInvoiceFromQuote(quoteId);
-
-      // Le client devra payer totalAmount pour funder l'Escrow
       await this.escrowService.initializeEscrow(quote.jobId, Number(invoice.totalAmount));
     }
 
@@ -82,6 +74,20 @@ export class QuotesService {
     return this.prisma.quote.findMany({
       where: { jobId },
       include: { artisan: { include: { user: { select: { firstName: true, lastName: true, avatarUrl: true } } } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findMyQuotes(artisanUserId: string) {
+    const artisan = await this.prisma.artisanProfile.findUnique({ where: { userId: artisanUserId } });
+    if (!artisan) throw new NotFoundException('Artisan profile not found');
+
+    return this.prisma.quote.findMany({
+      where: { artisanId: artisan.id },
+      include: {
+        job: { include: { service: true, client: { select: { firstName: true, lastName: true, avatarUrl: true } } } },
+        artisan: { include: { user: { select: { firstName: true, lastName: true, avatarUrl: true } } } },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }

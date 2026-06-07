@@ -420,6 +420,18 @@ export class ArtisansService {
   }
 
   /**
+   * Récupère le statut KYC actuel de l'artisan connecté.
+   */
+  async getKycStatus(userId: string) {
+    const kyc = await this.prisma.kycVerification.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: { status: true, verifiedAt: true, createdAt: true },
+    });
+    return kyc || { status: 'NONE' };
+  }
+
+  /**
    * Webhook Didit — appelé quand la vérification est terminée.
    * Met à jour le statut KYC en base.
    */

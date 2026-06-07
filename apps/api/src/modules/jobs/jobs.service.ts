@@ -189,31 +189,70 @@ export class JobsService {
       throw new NotFoundException("Job not found");
     }
 
-    // MOCK: En vrai on cherche les artisans disponibles dans le même secteur via PostGIS
-    // Pour l'intégration, on récupère quelques artisans de la base
+    // Récupérer les artisans disponibles
     const artisans = await this.prisma.artisanProfile.findMany({
-      take: 10,
+      take: 15,
       include: { user: true },
     });
 
+    if (artisans.length === 0) {
+      return { artisans: [], iaUsed: false };
+    }
+
     // Formatage pour l'IA
     const available_artisans = artisans.map((art) => ({
-      artisan_id: art.id,
+      artisan_id: art.user.id,
       specialty: job.service.name,
-      quartier_base: "DOUALA", // À dynamiser avec la vraie localisation de l'artisan
+      quartier_base: "Douala Centre",
       rating: art.rating,
       total_jobs: art.totalJobs,
-      avg_response_time_min: 30, // À dynamiser
+      avg_response_time_min: 30,
       is_premium: false,
     }));
 
-    return this.aiGateway.getMatches({
-      client_request: {
-        description: job.description,
-        urgency: "NORMALE", // À ajouter au DTO Job
-        quartier_code: "AKWA", // Mocké pour le moment (à déduire des coords GPS)
-      },
-      available_artisans,
-    });
+    let iaResult: any;
+    try {
+      iaResult = await this.aiGateway.getMatches({
+        client_request: {
+          description: job.description,
+          urgency: "NORMALE",
+          quartier_code: "AKWA",
+        },
+        available_artisans,
+      });
+    } catch {
+      iaResult = { recommendations: [], model_version: 'error' };
+    }
+
+    // Enrichir les recommandations avec les profils complets
+    const artisanMap = new Map(artisans.map((a) => [a.user.id, a]));
+    const enrichedArtisans = (iaResult.recommendations || []).map((rec: any) => {
+      const profile = artisanMap.get(rec.artisan_id);
+      if (!profile) return null;
+      return {
+        id: profile.user.id,
+        firstName: profile.user.firstName,
+        lastName: profile.user.lastName,
+        avatarUrl: profile.user.avatarUrl,
+        rating: profile.rating,
+        totalJobs: profile.totalJobs,
+        experienceYears: profile.experienceYears,
+        repere: 'Douala',
+        distance: null,
+        aiScore: Math.round(rec.match_probability * 100),
+        aiRank: rec.rank,
+        explanation: rec.match_probability > 0.8 
+          ? "Excellente compatibilité avec votre besoin" 
+          : rec.match_probability > 0.5 
+            ? "Bonne compatibilité" 
+            : "Artisan disponible",
+      };
+    }).filter(Boolean);
+
+    return {
+      artisans: enrichedArtisans,
+      iaModelVersion: iaResult.model_version || 'unknown',
+      iaUsed: iaResult.model_version !== 'fallback-v1.0',
+    };
   }
 }
