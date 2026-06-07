@@ -60,9 +60,10 @@ export default function CreateMissionPage() {
         lat: position.lat,
         lng: position.lng,
       });
-      showSuccessToast('Mission créée !');
-      const jobData = result.data?.data ?? result.data;
-      const jobId = jobData?.id;
+      showSuccessToast('Mission créée ! Vous allez être redirigé vers les recommandations IA.');
+      const raw = result.data;
+      const jobData = raw?.data ?? raw;
+      const jobId = jobData?.id ?? jobData?.jobId;
       if (jobId) {
         router.push(`/client/results/${jobId}`);
       } else {

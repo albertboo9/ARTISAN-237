@@ -37,8 +37,10 @@ export default function ArtisanDemandesPage() {
 
   const loadDemandes = async () => {
     try {
-      const { data } = await apiClient.get('/jobs/available');
-      setDemandes(data?.data ?? data ?? []);
+      const { data } = await apiClient.get('/jobs?status=SEARCHING');
+      const raw = data?.data ?? data;
+      const list = raw?.data ?? raw;
+      setDemandes(Array.isArray(list) ? list : []);
     } catch (err) {
       console.error('Erreur chargement demandes:', err);
     } finally {

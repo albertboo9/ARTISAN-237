@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, IsUUID, IsEnum, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsUUID, IsEnum, Min, IsOptional } from 'class-validator';
 import { QuoteStatus } from '@prisma/client';
 
 export class CreateQuoteDto {
@@ -12,11 +12,13 @@ export class CreateQuoteDto {
 
   @IsNumber()
   @Min(0)
-  materialsPrice!: number;
+  @IsOptional()
+  materialsPrice?: number;
 
   @IsNumber()
   @Min(0)
-  laborPrice!: number;
+  @IsOptional()
+  laborPrice?: number;
 
   @IsString()
   @IsNotEmpty()
