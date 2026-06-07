@@ -10,7 +10,7 @@ import { useAuthStore } from '../stores/auth.store';
 import { useLogout } from '../hooks/useAuth';
 import {
   LayoutDashboard, Briefcase, FileText, MessageSquare, Users, LogOut,
-  ChevronLeft, Menu, Bell, X, Plus, Shield, CreditCard, ShieldCheck,
+  ChevronLeft, Menu, Bell, X, Plus, Shield, CreditCard, ShieldCheck, MapPin,
 } from 'lucide-react';
 
 const clientNav = [
@@ -23,6 +23,8 @@ const clientNav = [
 
 const artisanNav = [
   { label: 'Tableau de bord', href: '/artisan', icon: LayoutDashboard },
+  { label: 'Demandes', href: '/artisan/demandes', icon: Briefcase },
+  { label: 'Marketplace', href: '/marketplace', icon: MapPin },
   { label: 'Mon profil', href: '/artisan/profil', icon: Users },
   { label: 'Mes devis', href: '/artisan/devis', icon: FileText },
   { label: 'KYC', href: '/artisan/kyc', icon: Shield },

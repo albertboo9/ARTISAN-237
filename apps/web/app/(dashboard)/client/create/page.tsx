@@ -3,252 +3,171 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, MapPin, Image, Check, Loader2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { ArrowLeft, MapPin, Sparkles, Loader2, Check, Wrench } from 'lucide-react';
 import Button from '../../../components/ui/button';
-import Input from '../../../components/ui/input';
 import { cn } from '../../../lib/cn';
 import { showSuccessToast, showErrorToast } from '../../../lib/error-handler';
 import apiClient from '../../../lib/api.client';
 
-const steps = ['Service', 'Localisation', 'Description', 'Confirmation'];
-
 export default function CreateMissionPage() {
   const router = useRouter();
-  const [step, setStep] = useState(0);
-  const [services, setServices] = useState<{ id: string; name: string; category: any }[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isFetchingServices, setIsFetchingServices] = useState(true);
-  const [selectedService, setSelectedService] = useState<string | null>(null);
-  const [position, setPosition] = useState({ lat: 4.0511, lng: 9.7085 });
-  const [address, setAddress] = useState('Akwa, Douala');
+  const [step, setStep] = useState<'describe' | 'location' | 'confirm' | 'sending'>('describe');
   const [description, setDescription] = useState('');
+  const [detectedService, setDetectedService] = useState<any>(null);
+  const [detecting, setDetecting] = useState(false);
+  const [position, setPosition] = useState({ lat: 4.0511, lng: 9.7085 });
+  const [address, setAddress] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    async function loadServices() {
-      try {
-        const { data } = await apiClient.get('/taxonomies/services');
-        // Le TransformInterceptor enveloppe dans { success, data, meta }
-        const servicesList = data?.data ?? data;
-        setServices(Array.isArray(servicesList) ? servicesList : []);
-      } catch (err) {
-        showErrorToast('Impossible de charger les services');
-      } finally {
-        setIsFetchingServices(false);
-      }
-    }
-    loadServices();
-    
-    // Attempt to get user's real location
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => console.warn('Geolocation denied or unavailable')
+        () => {}
       );
     }
   }, []);
 
-  const onSubmit = async () => {
-    if (!selectedService || !description) return;
-    
+  const handleAutoDetect = async () => {
+    if (!description.trim() || description.length < 10) {
+      showErrorToast('Veuillez décrire votre problème en quelques mots.');
+      return;
+    }
+    setDetecting(true);
+    try {
+      const { data: raw } = await apiClient.post('/jobs/auto-detect', { description });
+      const result = raw?.data ?? raw;
+      if (result?.service) {
+        setDetectedService(result);
+        setStep('location');
+      } else {
+        showErrorToast('Impossible de détecter le métier. Veuillez préciser votre besoin.');
+      }
+    } catch {
+      showErrorToast('Erreur lors de la détection. Réessayez.');
+    } finally { setDetecting(false); }
+  };
+
+  const handleSubmit = async () => {
+    if (!detectedService?.service?.id) return;
     setIsLoading(true);
     try {
       const result = await apiClient.post('/jobs', {
-        serviceId: selectedService,
+        serviceId: detectedService.service.id,
         description,
-        address,
+        address: address || 'Douala',
         lat: position.lat,
         lng: position.lng,
       });
-      showSuccessToast('Mission créée ! Vous allez être redirigé vers les recommandations IA.');
       const raw = result.data;
       const jobData = raw?.data ?? raw;
       const jobId = jobData?.id ?? jobData?.jobId;
+      showSuccessToast('Mission créée ! Redirection vers les recommandations IA...');
       if (jobId) {
-        router.push(`/client/results/${jobId}`);
+        setTimeout(() => router.push(`/client/results/${jobId}`), 800);
       } else {
         router.push('/client/missions');
       }
-    } catch (err) {
-      showErrorToast(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getServiceName = (id: string | null) => {
-    if (!id) return '';
-    return services.find(s => s.id === id)?.name || id;
+    } catch (err: any) {
+      showErrorToast(err?.response?.data?.message || 'Erreur lors de la création');
+    } finally { setIsLoading(false); }
   };
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Header */}
       <button onClick={() => router.back()} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6">
         <ArrowLeft className="h-4 w-4" /> Retour
       </button>
-
       <h1 className="text-2xl font-bold text-foreground">Créer une mission</h1>
-      <p className="text-muted-foreground mt-1">Décrivez votre besoin en quelques étapes</p>
+      <p className="text-muted-foreground mt-1">Décrivez votre problème, notre IA détecte le métier qu'il vous faut</p>
 
-      {/* Stepper */}
-      <div className="flex items-center gap-2 mt-8 mb-10">
-        {steps.map((s, i) => (
-          <div key={s} className="flex items-center gap-2 flex-1">
-            <div className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all flex-shrink-0',
-              i <= step ? 'bg-primary text-white' : 'bg-muted text-muted-foreground',
-            )}>
-              {i < step ? <Check className="h-4 w-4" /> : i + 1}
+      <div className="mt-8 space-y-6">
+        {step === 'describe' && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center gap-2 text-sm text-ai font-semibold">
+                <Sparkles className="h-4 w-4" /> Détection IA du métier
+              </div>
+              <textarea
+                rows={4}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full rounded-xl border border-border bg-surface p-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="Ex: Mon chauffe-eau fuit depuis hier..."
+              />
+              <Button onClick={handleAutoDetect} isLoading={detecting} className="w-full">
+                {detecting ? 'Analyse IA en cours...' : 'Détecter le métier et continuer'}
+              </Button>
             </div>
-            <span className={cn('text-xs font-medium hidden sm:block truncate', i <= step ? 'text-foreground' : 'text-muted-foreground')}>
-              {s}
-            </span>
-            {i < steps.length - 1 && <div className={cn('flex-1 h-0.5 rounded w-full', i < step ? 'bg-primary' : 'bg-muted')} />}
-          </div>
-        ))}
-      </div>
-
-      {/* Step Content */}
-      <motion.div key={step} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-        {step === 0 && (
-          <div className="space-y-4">
-            {isFetchingServices ? (
-              <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {services.length > 0 ? services.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => { setSelectedService(s.id); setStep(1); }}
-                    className={cn(
-                      'p-4 rounded-xl border-2 text-left transition-all',
-                      selectedService === s.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30',
-                    )}
-                  >
-                    <h3 className="font-medium text-foreground">{s.name}</h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {s.category?.name || 'Service général'}
-                    </p>
-                  </button>
-                )) : (
-                  // Fallback if DB is empty
-                  ['Plomberie', 'Électricité', 'Menuiserie', 'Peinture'].map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => { setSelectedService(s); setStep(1); }}
-                      className={cn(
-                        'p-4 rounded-xl border-2 text-left transition-all',
-                        selectedService === s ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30',
-                      )}
-                    >
-                      <h3 className="font-medium text-foreground">{s}</h3>
-                      <p className="text-xs text-muted-foreground mt-1">À partir de 5 000 FCFA</p>
-                    </button>
-                  ))
-                )}
-              </div>
-            )}
-            {selectedService && (
-              <div className="flex justify-end pt-4 border-t border-border mt-6">
-                <Button onClick={() => setStep(1)}>Continuer <ArrowRight className="h-4 w-4 ml-2" /></Button>
-              </div>
-            )}
-          </div>
+          </motion.div>
         )}
 
-        {step === 1 && (
-          <div className="space-y-6">
-            <div className="bento-card p-6 space-y-4">
-              <Input 
-                label="Adresse détaillée" 
-                placeholder="Ex: Akwa, Rue Drouot, Douala" 
-                icon={<MapPin className="h-4 w-4" />} 
+        {step === 'location' && detectedService && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <div className="bg-card border border-primary/30 rounded-2xl p-6 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Wrench className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Métier détecté</p>
+                  <p className="text-lg font-bold text-primary">{detectedService.service.name}</p>
+                  <p className="text-xs text-muted-foreground">Confiance IA : {detectedService.confidence}%</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-4">
+              <label className="text-sm font-medium">Adresse (optionnel)</label>
+              <input
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
+                className="w-full h-12 px-4 rounded-xl border border-border bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="Ex: Akwa, Douala"
               />
-              <div className="bg-surface-container rounded-xl p-3 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Position GPS</p>
-                  <p className="text-xs text-muted-foreground">{position.lat.toFixed(4)}, {position.lng.toFixed(4)}</p>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => {
+              <div className="flex items-center justify-between bg-surface-container rounded-xl p-3">
+                <p className="text-xs text-muted-foreground">GPS: {position.lat.toFixed(4)}, {position.lng.toFixed(4)}</p>
+                <button onClick={() => {
                   if ('geolocation' in navigator) {
                     navigator.geolocation.getCurrentPosition(
                       (pos) => setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude })
                     );
                   }
-                }}>
-                  <MapPin className="h-4 w-4 mr-1.5" /> Actualiser
-                </Button>
+                }} className="text-xs text-primary font-medium hover:underline">
+                  Actualiser
+                </button>
               </div>
             </div>
+
             <div className="flex gap-3">
-              <Button variant="secondary" onClick={() => setStep(0)} className="flex-1">Retour</Button>
-              <Button onClick={() => setStep(2)} disabled={!address.trim()} className="flex-1">Continuer <ArrowRight className="h-4 w-4 ml-2" /></Button>
+              <Button variant="secondary" onClick={() => setStep('describe')} className="flex-1">Modifier</Button>
+              <Button onClick={() => setStep('confirm')} className="flex-1">Continuer</Button>
             </div>
-          </div>
+          </motion.div>
         )}
 
-        {step === 2 && (
-          <div className="space-y-6">
-            <div className="bento-card p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1.5">Description détaillée de votre besoin</label>
-                <textarea
-                  rows={5}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-xl border border-border bg-surface p-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  placeholder="Décrivez précisément ce que vous souhaitez réaliser, les contraintes éventuelles, etc..."
-                />
+        {step === 'confirm' && detectedService && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-3">
+              <h3 className="font-semibold">Récapitulatif</h3>
+              <div className="text-sm space-y-2">
+                <p><span className="text-muted-foreground">Problème :</span> {description}</p>
+                <p><span className="text-muted-foreground">Métier :</span> <span className="text-primary font-semibold">{detectedService.service.name}</span></p>
+                <p><span className="text-muted-foreground">Adresse :</span> {address || 'Douala'}</p>
               </div>
-              <div className="flex items-center gap-3 p-4 rounded-xl border border-dashed border-border cursor-pointer hover:bg-surface-container transition-colors">
-                <Image className="h-5 w-5 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Ajouter des photos (optionnel)</span>
+              <div className="bg-amber-500/10 rounded-xl p-4 border border-amber-500/20">
+                <p className="text-sm text-amber-800">Votre mission sera visible par tous les artisans {detectedService.service.name.toLowerCase()}s autour de vous.</p>
               </div>
             </div>
             <div className="flex gap-3">
-              <Button variant="secondary" onClick={() => setStep(1)} className="flex-1">Retour</Button>
-              <Button onClick={() => setStep(3)} disabled={!description.trim()} className="flex-1">Continuer <ArrowRight className="h-4 w-4 ml-2" /></Button>
-            </div>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div className="space-y-6">
-            <div className="bento-card p-6 space-y-4">
-              <h3 className="font-semibold text-lg border-b border-border pb-3">Récapitulatif</h3>
-              <div className="space-y-3 pt-2">
-                <div className="flex justify-between items-start text-sm">
-                  <span className="text-muted-foreground">Service</span>
-                  <span className="font-medium text-right">{getServiceName(selectedService)}</span>
-                </div>
-                <div className="flex justify-between items-start text-sm">
-                  <span className="text-muted-foreground">Adresse</span>
-                  <span className="font-medium text-right max-w-[200px]">{address}</span>
-                </div>
-                <div className="flex justify-between items-start text-sm">
-                  <span className="text-muted-foreground">Description</span>
-                  <span className="font-medium text-right max-w-[200px] truncate" title={description}>{description}</span>
-                </div>
-              </div>
-              
-              <div className="mt-6 p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
-                <p className="text-sm text-amber-800">
-                  En publiant cette mission, elle sera visible par tous les artisans qualifiés autour de vous. Vous recevrez des devis sous peu.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="secondary" onClick={() => setStep(2)} className="flex-1">Modifier</Button>
-              <Button onClick={onSubmit} isLoading={isLoading} className="flex-1">
-                {isLoading ? 'Création...' : 'Publier la mission'}
+              <Button variant="secondary" onClick={() => setStep('location')} className="flex-1">Modifier</Button>
+              <Button onClick={handleSubmit} isLoading={isLoading} className="flex-1">
+                {isLoading ? 'Publication...' : 'Publier la mission'}
               </Button>
             </div>
-          </div>
+          </motion.div>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }
