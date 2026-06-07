@@ -10,7 +10,6 @@ import Input from '../../../components/ui/input';
 import { cn } from '../../../lib/cn';
 import { showSuccessToast, showErrorToast } from '../../../lib/error-handler';
 import apiClient from '../../../lib/api.client';
-import axios from 'axios';
 
 const steps = ['Service', 'Localisation', 'Description', 'Confirmation'];
 
@@ -29,9 +28,7 @@ export default function CreateMissionPage() {
   useEffect(() => {
     async function loadServices() {
       try {
-        const { data } = await axios.get('/services', {
-          baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1',
-        });
+        const { data } = await apiClient.get('/taxonomies/services');
         // Le TransformInterceptor enveloppe dans { success, data, meta }
         const servicesList = data?.data ?? data;
         setServices(Array.isArray(servicesList) ? servicesList : []);
@@ -57,14 +54,12 @@ export default function CreateMissionPage() {
     
     setIsLoading(true);
     try {
-      await axios.post('/jobs', {
+      await apiClient.post('/jobs', {
         serviceId: selectedService,
         description,
         address,
         lat: position.lat,
         lng: position.lng,
-      }, {
-        baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1',
       });
       showSuccessToast('Mission créée avec succès !');
       router.push('/client/missions');

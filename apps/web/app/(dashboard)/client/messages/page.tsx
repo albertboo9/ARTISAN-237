@@ -7,7 +7,7 @@ import { cn } from '../../../lib/cn';
 import { PageTransition } from '../../../components/shared/page-transition';
 import { useAuthStore } from '../../../stores/auth.store';
 import { useChatStore } from '../../../stores/chat.store';
-import { apiClient } from '../../../lib/api-client';
+import apiClient  from '../../../lib/api.client';
 
 export default function ClientMessagesPage() {
   const { user } = useAuthStore();
@@ -26,8 +26,8 @@ export default function ClientMessagesPage() {
       if (!user?.id) return;
       try {
         // Fetch jobs for the client
-        const jobs = await apiClient<any>(`/jobs?clientId=${user.id}`);
-        const jobsList = jobs?.data || jobs || [];
+        const { data: raw } = await apiClient.get(`/jobs?clientId=${user.id}`);
+        const jobsList = raw?.data ?? raw ?? [];
         
         // Only show jobs that have an accepted quote (thus an artisan)
         const activeJobs = jobsList

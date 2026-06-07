@@ -1,9 +1,7 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>ARTISAN-237 : Rapport d'Ingénierie</title>
-<style>
+import os
+
+def generate_html():
+    css = """
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     body {
@@ -227,7 +225,14 @@
     .toc-h1 { font-weight: 600; margin-top: 1rem; color: #111827; font-size: 10.5pt; }
     .toc-h2 { margin-left: 1.5rem; color: #4B5563; }
     .toc-dots { flex-grow: 1; border-bottom: 1px dotted #D1D5DB; margin: 0 8px; }
-    </style>
+    """
+
+    html = """<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>ARTISAN-237 : Rapport d'Ingénierie</title>
+<style>CSS_PLACEHOLDER</style>
 </head>
 <body>
 
@@ -544,3 +549,12 @@ services:
 
 </body>
 </html>
+"""
+    html = html.replace("CSS_PLACEHOLDER", css)
+    
+    with open("rapport_soutenance.html", "w", encoding="utf-8") as f:
+        f.write(html)
+    print("New sleek enterprise report generated successfully.")
+
+if __name__ == "__main__":
+    generate_html()

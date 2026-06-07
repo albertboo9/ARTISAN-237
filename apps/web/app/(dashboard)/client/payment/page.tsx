@@ -8,10 +8,9 @@ import Link from 'next/link';
 import { StripeProvider } from '../../../components/payment/stripe-provider';
 import { PaymentForm } from '../../../components/payment/payment-form';
 import { showSuccessToast, showErrorToast } from '../../../lib/error-handler';
-import axios from 'axios';
+import apiClient from '../../../lib/api.client';
 import Button from '../../../components/ui/button';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 function unwrap(data: any) { return data?.data ?? data; }
 
 function PaymentContent() {
@@ -26,18 +25,12 @@ function PaymentContent() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const getHeaders = () => {
-    const token = localStorage.getItem('accessToken');
-    return { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
-  };
-
   useEffect(() => {
     async function loadData() {
       if (!quoteId) { setIsLoading(false); return; }
       try {
-        // Fetch quotes for this job to find the one we accepted
         if (jobId) {
-          const { data } = await axios.get(`${API_URL}/quotes/job/${jobId}`, getHeaders());
+          const { data } = await apiClient.get(`/quotes/job/${jobId}`);
           const quotes = unwrap(data);
           if (Array.isArray(quotes)) {
             const found = quotes.find((q: any) => q.id === quoteId);
@@ -45,7 +38,6 @@ function PaymentContent() {
           }
         }
       } catch (err) {
-        // Fallback: show minimal data from URL params
         setQuote({ id: quoteId, jobId, estimatedPrice: 0 });
       } finally {
         setIsLoading(false);
@@ -57,16 +49,10 @@ function PaymentContent() {
   const handlePaymentSuccess = async () => {
     setIsProcessing(true);
     try {
-      // In real app: confirm PaymentIntent via backend
-      // For demo: simulate success then update job status
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Update job status to IN_PROGRESS after payment
       if (jobId) {
-        await axios.patch(`${API_URL}/jobs/${jobId}/status`, 
-          { status: 'IN_PROGRESS' },
-          getHeaders()
-        ).catch(() => {}); // Non-blocking
+        await apiClient.patch(`/jobs/${jobId}/status`, { status: 'IN_PROGRESS' }).catch(() => {});
       }
       
       setIsSuccess(true);

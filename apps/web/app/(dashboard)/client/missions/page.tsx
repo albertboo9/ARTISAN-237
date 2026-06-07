@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Plus, Briefcase, ArrowRight } from 'lucide-react';
 import Button from '../../../components/ui/button';
 import { cn } from '../../../lib/cn';
+import apiClient from '../../../lib/api.client';
 
 const statusStyles: Record<string, string> = {
   SEARCHING: 'bg-amber-100 text-amber-700',
@@ -20,13 +21,9 @@ export default function MissionsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    fetch('http://localhost:3001/api/v1/jobs', {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
-      .then(r => r.json())
-      .then(d => {
-        const list = d?.data || d || [];
+    apiClient.get('/jobs')
+      .then(({ data }) => {
+        const list = data?.data || data || [];
         setMissions(Array.isArray(list) ? list : []);
       })
       .catch(() => {})

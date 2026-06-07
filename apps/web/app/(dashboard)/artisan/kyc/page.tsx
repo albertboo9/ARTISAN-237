@@ -2,196 +2,136 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, ExternalLink, RefreshCw, CheckCircle, XCircle, Clock } from 'lucide-react';
-import Button from '../../../components/ui/button';
-import { cn } from '../../../lib/cn';
-import { showSuccessToast, showErrorToast } from '../../../lib/error-handler';
-import { apiClient } from '../../../lib/api-client';
+import { Shield, CheckCircle, AlertCircle, ExternalLink, Loader2, RefreshCw } from 'lucide-react';
+import apiClient from '../../../lib/api.client';
 import { useAuthStore } from '../../../stores/auth.store';
+import { showSuccessToast, showErrorToast } from '../../../lib/error-handler';
 
-export default function KycPage() {
-  const { user, fetchMe } = useAuthStore();
-  const [status, setStatus] = useState<'pending' | 'verified' | 'rejected' | 'unverified'>('unverified');
-  const [isLoading, setIsLoading] = useState(false);
-  const [verificationUrl, setVerificationUrl] = useState<string | null>(null);
+export default function ArtisanKycPage() {
+  const { user } = useAuthStore();
+  const [step, setStep] = useState<'loading' | 'info' | 'session' | 'pending' | 'verified'>('loading');
+  const [sessionUrl, setSessionUrl] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [kycStatus, setKycStatus] = useState<string>('NONE');
 
-  // Check initial KYC status from user object
   useEffect(() => {
-    if (!user) return;
-    
-    // Assuming user object has kycVerifications array from the backend
-    const latestKyc = (user as any).kycVerifications?.[0];
-    if (latestKyc) {
-      if (latestKyc.status === 'VERIFIED') setStatus('verified');
-      else if (latestKyc.status === 'REJECTED') setStatus('rejected');
-      else if (latestKyc.status === 'PENDING') {
-        setStatus('pending');
-        if (latestKyc.verificationUrl) {
-          setVerificationUrl(latestKyc.verificationUrl);
-        }
-      }
-    }
+    if (user?.id) checkExistingKyc();
   }, [user]);
 
-  // Polling when pending
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (status === 'pending') {
-      interval = setInterval(async () => {
-        try {
-          await fetchMe(); // This will refresh the user object and trigger the first useEffect
-        } catch (err) {
-          console.error('Failed to poll KYC status', err);
-        }
-      }, 10000); // Poll every 10 seconds
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [status, fetchMe]);
-
-  const initiateKyc = async () => {
-    setIsLoading(true);
+  const checkExistingKyc = async () => {
     try {
-      const data = await apiClient<any>('/artisans/kyc/initiate', {
-        method: 'POST',
-      });
-      showSuccessToast('Session KYC créée ! Redirection en cours...');
-      setStatus('pending');
-      if (data?.verificationUrl) {
-        setVerificationUrl(data.verificationUrl);
-        // Open Didit session in new tab
-        window.open(data.verificationUrl, '_blank');
-      }
-      await fetchMe();
-    } catch (err) {
-      showErrorToast(err);
-    } finally {
-      setIsLoading(false);
-    }
+      const { data: raw } = await apiClient.get('/artisans/kyc/status');
+      const status = raw?.status || raw?.data?.status || 'NONE';
+      setKycStatus(status);
+      if (status === 'VERIFIED') setStep('verified');
+      else if (status === 'PENDING') setStep('pending');
+      else setStep('info');
+    } catch { setStep('info'); }
   };
 
+  const handleInitSession = async () => {
+    setLoading(true);
+    try {
+      const { data: raw } = await apiClient.post('/artisans/kyc/initiate');
+      const body = raw?.data ?? raw;
+      setSessionUrl(body.verificationUrl);
+      setSessionId(body.id);
+      setStep('session');
+      showSuccessToast('Session KYC créée avec Didit.');
+    } catch (err: any) {
+      showErrorToast(err?.response?.data?.message || 'Erreur lors de l\'initialisation KYC');
+    } finally { setLoading(false); }
+  };
+
+  const handleCheckStatus = async () => {
+    try {
+      await checkExistingKyc();
+      if (kycStatus === 'VERIFIED') showSuccessToast('Identité vérifiée !');
+    } catch { showErrorToast('Erreur de vérification'); }
+  };
+
+  if (step === 'loading') {
+    return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
+
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground">Vérification d'Identité (KYC)</h1>
-        <p className="text-muted-foreground mt-1">Conformité aux normes bancaires et sécurisation de votre compte.</p>
-      </div>
+    <div className="max-w-2xl mx-auto py-8">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-        <div className="md:col-span-3">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bento-card p-8 border border-border/50 shadow-sm relative overflow-hidden"
-          >
-            {/* Background pattern */}
-            <div className="absolute top-0 right-0 -mr-16 -mt-16 text-primary/5">
-              <ShieldCheck className="w-64 h-64" />
-            </div>
-
-            <div className="relative z-10 flex flex-col items-center text-center space-y-6">
-              <div className={cn(
-                'flex h-24 w-24 items-center justify-center rounded-full transition-colors duration-500 shadow-inner',
-                status === 'verified' ? 'bg-green-100/80 ring-8 ring-green-50' :
-                status === 'rejected' ? 'bg-red-100/80 ring-8 ring-red-50' :
-                status === 'pending' ? 'bg-amber-100/80 ring-8 ring-amber-50' : 'bg-primary/10 ring-8 ring-primary/5',
-              )}>
-                {status === 'verified' ? <CheckCircle className="h-10 w-10 text-green-600" /> :
-                 status === 'rejected' ? <XCircle className="h-10 w-10 text-red-600" /> :
-                 status === 'pending' ? <Clock className="h-10 w-10 text-amber-600 animate-pulse" /> :
-                 <ShieldCheck className="h-10 w-10 text-primary" />}
-              </div>
-
-              <div>
-                <h2 className="text-2xl font-bold text-foreground">
-                  {status === 'verified' ? 'Identité vérifiée' :
-                   status === 'rejected' ? 'Vérification échouée' :
-                   status === 'pending' ? 'Analyse en cours...' :
-                   'Vérification requise'}
-                </h2>
-                <p className="text-sm text-muted-foreground mt-3 max-w-sm mx-auto leading-relaxed">
-                  {status === 'unverified' && 'Pour garantir la sécurité des transactions sur Artisan237, vous devez vérifier votre identité via notre partenaire bancaire agréé (Didit).'}
-                  {status === 'pending' && 'Votre dossier est en cours d\'analyse. Ce processus prend généralement moins de 3 minutes. Veuillez patienter.'}
-                  {status === 'verified' && 'Votre compte est certifié. Vous pouvez maintenant recevoir des paiements sécurisés et accepter des missions.'}
-                  {status === 'rejected' && 'La vérification n\'a pas pu aboutir. Assurez-vous que votre pièce d\'identité est valide et bien éclairée.'}
-                </p>
-              </div>
-
-              <div className="w-full pt-4">
-                {(status === 'unverified' || status === 'rejected') && (
-                  <Button onClick={initiateKyc} isLoading={isLoading} size="lg" className="w-full sm:w-2/3 shadow-md">
-                    <ShieldCheck className="h-4 w-4 mr-2" />
-                    {status === 'rejected' ? 'Relancer la vérification' : 'Démarrer la vérification sécurisée'}
-                  </Button>
-                )}
-
-                {status === 'pending' && (
-                  <div className="space-y-4 w-full sm:w-2/3 mx-auto">
-                    {verificationUrl && (
-                      <Button onClick={() => window.open(verificationUrl, '_blank')} variant="outline" className="w-full">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Ouvrir la session Didit
-                      </Button>
-                    )}
-                    <div className="flex items-center justify-center gap-2 text-sm text-amber-600 font-medium bg-amber-50 p-3 rounded-xl border border-amber-100">
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      Vérification automatique en cours...
-                    </div>
-                  </div>
-                )}
-
-                {status === 'verified' && (
-                  <div className="flex items-center justify-center gap-2 text-sm font-medium text-green-700 bg-green-50 p-4 rounded-xl border border-green-200 shadow-sm">
-                    <CheckCircle className="h-5 w-5" />
-                    Profil certifié et paiements activés
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        <div className="md:col-span-2 space-y-6">
-          <div className="bento-card p-6 bg-surface-container/30 border-none shadow-none">
-            <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-primary" /> Sécurité Bancaire
-            </h3>
-            <ul className="space-y-4 text-sm text-muted-foreground">
-              <li className="flex items-start gap-3">
-                <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                <p>Vos données sont chiffrées de bout en bout et transmises de manière sécurisée.</p>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                <p>Nous ne stockons aucune photo de vos documents d'identité sur nos serveurs.</p>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                <p>Obligatoire pour lutter contre la fraude et le blanchiment d'argent.</p>
-              </li>
-            </ul>
+        <div className="flex items-center gap-4 mb-6">
+          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <Shield className="h-7 w-7 text-primary" />
           </div>
-          
-          <div className="bento-card p-6 border border-border/50">
-            <h3 className="font-semibold text-foreground mb-4">Ce qu'il vous faut :</h3>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-3 text-sm font-medium">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container text-foreground">1</div>
-                Une pièce d'identité valide (CNI, Passeport).
-              </li>
-              <li className="flex items-center gap-3 text-sm font-medium">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container text-foreground">2</div>
-                Un smartphone avec appareil photo.
-              </li>
-              <li className="flex items-center gap-3 text-sm font-medium">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container text-foreground">3</div>
-                Un environnement bien éclairé.
-              </li>
-            </ul>
+          <div>
+            <h1 className="text-2xl font-bold">Vérification KYC</h1>
+            <p className="text-muted-foreground">Vérifiez votre identité avec Didit</p>
           </div>
         </div>
-      </div>
+
+        {step === 'info' && (
+          <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-4">
+            <h3 className="text-lg font-semibold">Pourquoi vérifier votre identité ?</h3>
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              <li className="flex items-start gap-3"><CheckCircle className="h-5 w-5 text-primary mt-0.5" /><span>Badge "Vérifié" visible par les clients</span></li>
+              <li className="flex items-start gap-3"><CheckCircle className="h-5 w-5 text-primary mt-0.5" /><span>Plus de missions et de devis</span></li>
+              <li className="flex items-start gap-3"><CheckCircle className="h-5 w-5 text-primary mt-0.5" /><span>Votre identité est sécurisée via Didit</span></li>
+            </ul>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <p className="text-sm text-amber-800 font-medium">Vérification via Didit — pièce d'identité valide requise (CNI, Passeport).</p>
+            </div>
+            <button onClick={handleInitSession} disabled={loading} className="w-full py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {loading ? 'Initialisation...' : 'Lancer la vérification Didit'}
+            </button>
+          </div>
+        )}
+
+        {step === 'session' && sessionUrl && (
+          <div className="space-y-4">
+            <div className="bg-card border border-border/50 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center gap-3 text-green-600">
+                <CheckCircle className="h-6 w-6" />
+                <h3 className="text-lg font-semibold text-green-700">Session Didit initialisée</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">Cliquez sur le bouton pour ouvrir la session de vérification Didit.</p>
+              <a href={sessionUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors">
+                <ExternalLink className="h-4 w-4" /> Ouvrir la session Didit
+              </a>
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p className="text-sm text-blue-800">Après vérification, revenez ici et cliquez sur "Vérifier le statut".</p>
+              </div>
+            </div>
+            <button onClick={handleCheckStatus} className="w-full py-3 border border-primary text-primary text-sm font-semibold rounded-xl hover:bg-primary/5 transition-colors flex items-center justify-center gap-2">
+              <RefreshCw className="h-4 w-4" /> Vérifier le statut
+            </button>
+          </div>
+        )}
+
+        {step === 'pending' && (
+          <div className="bg-card border border-border/50 rounded-2xl p-8 text-center space-y-4">
+            <div className="h-16 w-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto">
+              <AlertCircle className="h-8 w-8 text-amber-600" />
+            </div>
+            <h3 className="text-lg font-semibold">Demande en cours</h3>
+            <p className="text-sm text-muted-foreground">Votre demande KYC est en attente de validation.</p>
+            <button onClick={handleCheckStatus} className="inline-flex items-center gap-2 px-6 py-2.5 border border-primary text-primary text-sm font-semibold rounded-xl hover:bg-primary/5 transition-colors">
+              <RefreshCw className="h-4 w-4" /> Vérifier le statut
+            </button>
+          </div>
+        )}
+
+        {step === 'verified' && (
+          <div className="bg-card border border-green-200 rounded-2xl p-8 text-center space-y-4">
+            <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-green-700">Identité vérifiée</h3>
+            <p className="text-sm text-muted-foreground">Votre identité a été vérifiée avec succès via Didit.</p>
+          </div>
+        )}
+
+      </motion.div>
     </div>
   );
 }

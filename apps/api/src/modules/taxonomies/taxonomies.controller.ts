@@ -18,6 +18,12 @@ export class TaxonomiesController {
     return this.taxonomiesService.findAllCategories();
   }
 
+  @ApiOperation({ summary: "List all services available on the platform" })
+  @Get("services")
+  async getAllServices() {
+    return this.taxonomiesService.findAllServices();
+  }
+
   @ApiOperation({ summary: "List services for a specific category" })
   @Get("categories/:id/services")
   async getServices(@Param("id") categoryId: string) {

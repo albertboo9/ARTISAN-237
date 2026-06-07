@@ -5,11 +5,9 @@ import { motion } from 'framer-motion';
 import { FileText, CheckCircle, Clock, XCircle, ArrowRight, Loader2, MessageSquare, MapPin } from 'lucide-react';
 import Button from '../../../components/ui/button';
 import { showErrorToast, showSuccessToast } from '../../../lib/error-handler';
-import axios from 'axios';
+import apiClient from '../../../lib/api.client';
 import Link from 'next/link';
 import { cn } from '../../../lib/cn';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
 function unwrap(data: any) { return data?.data ?? data; }
 
@@ -18,15 +16,10 @@ export default function QuotesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
 
-  const getHeaders = () => {
-    const token = localStorage.getItem('accessToken');
-    return { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } };
-  };
-
   useEffect(() => {
     async function fetchQuotes() {
       try {
-        const { data } = await axios.get(`${API_URL}/quotes?status=PENDING,ACCEPTED,REJECTED`, getHeaders());
+        const { data } = await apiClient.get('/quotes?status=PENDING,ACCEPTED,REJECTED');
         const body = unwrap(data);
         setQuotes(Array.isArray(body) ? body : body?.data || []);
       } catch (err) {
@@ -41,10 +34,9 @@ export default function QuotesPage() {
   const handleAccept = async (quoteId: string) => {
     setAcceptingId(quoteId);
     try {
-      await axios.patch(`${API_URL}/quotes/${quoteId}/status`, { status: 'ACCEPTED' }, getHeaders());
+      await apiClient.patch(`/quotes/${quoteId}/status`, { status: 'ACCEPTED' });
       showSuccessToast('Devis accepté !');
-      // Refresh
-      const { data } = await axios.get(`${API_URL}/quotes?status=PENDING,ACCEPTED,REJECTED`, getHeaders());
+      const { data } = await apiClient.get('/quotes?status=PENDING,ACCEPTED,REJECTED');
       setQuotes(Array.isArray(unwrap(data)) ? unwrap(data) : []);
     } catch (err) {
       showErrorToast('Erreur lors de l\'acceptation du devis');

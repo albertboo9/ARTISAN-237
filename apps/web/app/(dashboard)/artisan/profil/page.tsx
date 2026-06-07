@@ -7,7 +7,7 @@ import Button from '../../../components/ui/button';
 import Input from '../../../components/ui/input';
 import { showSuccessToast, showErrorToast } from '../../../lib/error-handler';
 import { useAuthStore } from '../../../stores/auth.store';
-import { apiClient } from '../../../lib/api-client';
+import  apiClient  from '../../../lib/api.client';
 
 export default function ArtisanProfilPage() {
   const { user, fetchMe } = useAuthStore();
@@ -23,10 +23,11 @@ export default function ArtisanProfilPage() {
   useEffect(() => {
     async function loadProfile() {
       try {
-        const data = await apiClient<any>('/artisans/profile');
-        setProfile(data);
-        setBio(data?.bio || '');
-        setExperienceYears(data?.experienceYears || 0);
+        const { data: raw } = await apiClient.get('/artisans/profile');
+        const profileData = raw?.data ?? raw;
+        setProfile(profileData);
+        setBio(profileData?.bio || '');
+        setExperienceYears(profileData?.experienceYears || 0);
       } catch (err) {
         console.error(err);
       } finally {
@@ -39,13 +40,10 @@ export default function ArtisanProfilPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await apiClient('/artisans/profile', {
-        method: 'PUT',
-        body: JSON.stringify({ bio, experienceYears }),
-      });
+      await apiClient.put('/artisans/profile', { bio, experienceYears });
       showSuccessToast('Profil mis à jour avec succès');
-      const updated = await apiClient<any>('/artisans/profile');
-      setProfile(updated);
+      const { data: updatedRaw } = await apiClient.get('/artisans/profile');
+      setProfile(updatedRaw?.data ?? updatedRaw);
     } catch (err) {
       showErrorToast(err);
     } finally {
@@ -57,10 +55,7 @@ export default function ArtisanProfilPage() {
     setIsToggling(true);
     const newState = !profile?.isAvailable;
     try {
-      await apiClient('/artisans/availability', {
-        method: 'PUT',
-        body: JSON.stringify({ isAvailable: newState }),
-      });
+      await apiClient.put('/artisans/availability', { isAvailable: newState });
       setProfile({ ...profile, isAvailable: newState });
       showSuccessToast(newState ? 'Vous êtes maintenant disponible' : 'Vous êtes maintenant indisponible');
     } catch (err) {

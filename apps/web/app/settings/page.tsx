@@ -10,7 +10,7 @@ import Button from '../components/ui/button';
 import Input from '../components/ui/input';
 import { showSuccessToast, showErrorToast } from '../lib/error-handler';
 import { useAuthStore } from '../stores/auth.store';
-import { apiClient } from '../lib/api-client';
+import  apiClient  from '../lib/api.client';
 import { useTheme } from 'next-themes';
 
 const sections = [
@@ -40,10 +40,7 @@ export default function SettingsPage() {
     try {
       // Assuming a generic /auth/me or /users/me endpoint for base profile info
       // If such endpoint doesn't exist yet, this is a placeholder
-      await apiClient('/auth/me', {
-        method: 'PUT',
-        body: JSON.stringify({ firstName, lastName, email, phoneNumber }),
-      });
+      await apiClient.put('/auth/me', { firstName, lastName, email, phoneNumber });
       await fetchMe();
       showSuccessToast('Profil mis à jour');
     } catch (err) {
@@ -60,10 +57,7 @@ export default function SettingsPage() {
     }
     setIsSaving(true);
     try {
-      await apiClient('/auth/password', {
-        method: 'PUT',
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
+      await apiClient.put('/auth/password', { currentPassword, newPassword });
       showSuccessToast('Mot de passe mis à jour');
       setCurrentPassword('');
       setNewPassword('');

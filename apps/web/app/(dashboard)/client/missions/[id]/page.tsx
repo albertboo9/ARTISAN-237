@@ -8,13 +8,10 @@ import Button from '../../../../components/ui/button';
 import { PageTransition } from '../../../../components/shared/page-transition';
 import { ChatWindow } from '../../../../components/chat/ChatWindow';
 import { showSuccessToast, showErrorToast } from '../../../../lib/error-handler';
-import axios from 'axios';
+import apiClient from '../../../../lib/api.client';
 import Link from 'next/link';
 import { cn } from '../../../../lib/cn';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-
-// Helper to unwrap TransformInterceptor
 function unwrap(data: any) {
   return data?.data ?? data;
 }
@@ -31,30 +28,25 @@ export default function MissionDetailPage() {
   useEffect(() => {
     async function fetchMission() {
       try {
-        const token = localStorage.getItem('accessToken');
-        const headers = { Authorization: `Bearer ${token}` };
-        
         // Fetch mission details
-        const { data: missionData } = await axios.get(`${API_URL}/jobs/${id}`, { headers });
+        const { data: missionData } = await apiClient.get(`/jobs/${id}`);
         const missionBody = unwrap(missionData);
         setMission(missionBody);
 
         // Fetch AI matches
         setLoadingMatches(true);
         try {
-          const { data: matchesData } = await axios.get(`${API_URL}/jobs/${id}/matches`, { headers });
+          const { data: matchesData } = await apiClient.get(`/jobs/${id}/matches`);
           const matchesBody = unwrap(matchesData);
           if (matchesBody?.artisans) {
             setMatches(matchesBody.artisans);
           }
         } catch (err) {
-          // Matches are optional, fail silently
           console.warn('Could not fetch AI matches:', err);
         }
         setLoadingMatches(false);
       } catch (err) {
         showErrorToast(err);
-        setIsLoading(false);
       } finally {
         setIsLoading(false);
       }
@@ -64,11 +56,7 @@ export default function MissionDetailPage() {
 
   const completeMission = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      await axios.patch(`${API_URL}/jobs/${id}/status`, 
-        { status: 'COMPLETED' },
-        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
-      );
+      await apiClient.patch(`/jobs/${id}/status`, { status: 'COMPLETED' });
       setMission({ ...mission, status: 'COMPLETED' });
       showSuccessToast('Mission marquée comme terminée !');
     } catch (err) {
@@ -116,9 +104,9 @@ export default function MissionDetailPage() {
               mission.status === 'IN_PROGRESS' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
             )}>
               {mission.status === 'SEARCHING' ? 'En recherche' :
-               mission.status === 'QUOTE_ACCEPTED' ? '🔒 Devis accepté' :
-               mission.status === 'IN_PROGRESS' ? '🔧 En travaux' :
-               mission.status === 'COMPLETED' ? '✅ Terminé' : mission.status}
+               mission.status === 'QUOTE_ACCEPTED' ? 'Devis accepté' :
+               mission.status === 'IN_PROGRESS' ? 'En travaux' :
+               mission.status === 'COMPLETED' ? 'Terminé' : mission.status}
             </span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
@@ -278,8 +266,8 @@ export default function MissionDetailPage() {
                 mission.escrow.status === 'FUNDED' ? 'bg-green-100 text-green-700' :
                 mission.escrow.status === 'RELEASED' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'
               )}>
-                {mission.escrow.status === 'FUNDED' ? '🔒 Bloqués' :
-                 mission.escrow.status === 'RELEASED' ? '✅ Libérés' : 'En attente'}
+                {mission.escrow.status === 'FUNDED' ? 'Bloqués' :
+                 mission.escrow.status === 'RELEASED' ? 'Libérés' : 'En attente'}
               </span>
             </div>
           </div>
@@ -297,7 +285,7 @@ export default function MissionDetailPage() {
           </div>
         )}
 
-        {showChat && <ChatWindow jobId={id as string} onClose={() => setShowChat(false)} />}
+        {showChat && <ChatWindow jobId={id as string} otherUserName={mission.artisan?.user?.firstName || 'Artisan'} currentUserId={mission.clientId || ''} onClose={() => setShowChat(false)} />}
       </div>
     </PageTransition>
   );

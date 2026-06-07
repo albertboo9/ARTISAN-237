@@ -15,6 +15,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { DisputesModule } from './modules/disputes/disputes.module';
 import { MailModule } from './modules/mail/mail.module';
 import { TestModule } from './modules/test/test.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { SharedModule } from './shared/shared.module';
 import configuration from './config/configuration';
 
@@ -41,6 +42,7 @@ import configuration from './config/configuration';
     DisputesModule,
     MailModule,
     TestModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

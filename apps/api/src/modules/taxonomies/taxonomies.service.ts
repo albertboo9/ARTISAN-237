@@ -52,9 +52,17 @@ export class TaxonomiesService {
     });
   }
 
+  async findAllServices() {
+    return this.prisma.service.findMany({
+      include: { category: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
   async findServicesByCategory(categoryId: string) {
     return this.prisma.service.findMany({
       where: { categoryId },
+      include: { category: true },
       orderBy: { name: 'asc' },
     });
   }

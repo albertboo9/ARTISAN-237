@@ -7,7 +7,7 @@ import { cn } from '../../../lib/cn';
 import { PageTransition } from '../../../components/shared/page-transition';
 import { useAuthStore } from '../../../stores/auth.store';
 import { useChatStore } from '../../../stores/chat.store';
-import { apiClient } from '../../../lib/api-client';
+import  apiClient  from '../../../lib/api.client';
 
 export default function ArtisanMessagesPage() {
   const { user } = useAuthStore();
@@ -26,18 +26,19 @@ export default function ArtisanMessagesPage() {
       if (!user?.id) return;
       try {
         // Fetch accepted quotes to get jobs where the artisan is active
-        const quotes = await apiClient<any[]>(`/quotes?artisanId=${user.id}`);
-        const activeJobs = quotes
-          .filter(q => q.status === 'ACCEPTED')
-          .map(q => ({
+        const { data: quotesData } = await apiClient.get(`/quotes?artisanId=${user.id}`);
+        const quotesList = quotesData?.data ?? quotesData ?? [];
+        const activeJobs = Array.isArray(quotesList)
+          ? quotesList.filter((q: any) => q.status === 'ACCEPTED').map((q: any) => ({
             id: q.jobId,
             name: q.job?.client?.firstName ? `${q.job.client.firstName} ${q.job.client.lastName}` : 'Client',
             title: q.job?.title || 'Mission',
             lastMsg: 'Connecté pour la mission',
             time: new Date(q.job?.createdAt || Date.now()).toLocaleDateString('fr-FR'),
             unread: 0,
-            online: false
-          }));
+            online: false,
+          }))
+          : [];
         setConversations(activeJobs);
         if (activeJobs.length > 0) {
           setActiveId(activeJobs[0].id);
